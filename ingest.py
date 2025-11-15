@@ -1,6 +1,6 @@
 import os
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import DirectoryLoader, TextLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter  # <- CHANGED
+from langchain_community.document_loaders import DirectoryLoader, TextLoader  # <- CHANGED
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 

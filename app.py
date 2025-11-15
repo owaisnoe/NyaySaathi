@@ -3,14 +3,13 @@ import google.generativeai as genai
 import os
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.prompts import PromptTemplate
-from langchain.schema.runnable import RunnablePassthrough
-from langchain.schema.output_parser import StrOutputParser
+from langchain_core.prompts import PromptTemplate  # <- CHANGED
+from langchain_core.runnables import RunnablePassthrough  # <- CHANGED
+from langchain_core.output_parsers import StrOutputParser  # <- CHANGED
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 # --- CONFIGURATION ---
 try:
-    # Set the page config as the first Streamlit command
     st.set_page_config(page_title="Nyay-Saathi", page_icon="🤝", layout="wide")
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 except Exception as e:
@@ -50,7 +49,7 @@ QUESTION:
 Your Simple, 3-Step Action Plan:
 """
 
-# --- LOAD THE MODEL & VECTOR STORE (This runs once) ---
+# --- LOAD THE MODEL & VECTOR STORE ---
 @st.cache_resource
 def load_models_and_db():
     try:
@@ -92,6 +91,7 @@ tab1, tab2 = st.tabs(["**Samjhao** (Explain this to me)", "**Kya Karoon?** (What
 # --- TAB 1: SAMJHAO (EXPLAIN) ---
 with tab1:
     st.header("Translate 'Legalese' into simple language")
+    # ... (rest of the code is the same) ...
     st.write("Confused by a legal notice, rent agreement, or court paper? Paste it here.")
     legal_text = st.text_area("Paste the confusing legal text here:", height=200)
     
@@ -109,6 +109,7 @@ with tab1:
 # --- TAB 2: KYA KAROON? (WHAT TO DO?) ---
 with tab2:
     st.header("Ask for a simple action plan")
+    # ... (rest of the code is the same) ...
     st.write("Scared? Confused? Ask a question and get a simple 3-step plan **based on real guides.**")
     user_question = st.text_input("Ask your question (e.g., 'My landlord is threatening to evict me')")
     

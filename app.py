@@ -6,7 +6,7 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.prompts import PromptTemplate
 from langchain.schema.runnable import RunnablePassthrough
 from langchain.schema.output_parser import StrOutputParser
-from langchain_google_genai import ChatGoogleGenerativeModel
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 # --- CONFIGURATION ---
 try:
@@ -57,7 +57,7 @@ def load_models_and_db():
         embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2',
                                            model_kwargs={'device': 'cpu'})
         db = FAISS.load_local(DB_FAISS_PATH, embeddings, allow_dangerous_deserialization=True)
-        llm = ChatGoogleGenerativeModel(model=MODEL_NAME, temperature=0.7)
+        llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.7)
         return db.as_retriever(), llm
     except Exception as e:
         st.error(f"Error loading models or vector store: {e}")

@@ -18,7 +18,7 @@ st.set_page_config(page_title="Nyay-Saathi", page_icon="🤝", layout="wide")
 # --- CUSTOM CSS ---
 st.markdown("""
 <style>
-/* ... (Your custom CSS is here, hidden for brevity) ... */
+/* ... (Your theme, font, and button CSS are perfect) ... */
 :root {
     --primary-color: #00FFD1;
     --background-color: #08070C;
@@ -47,11 +47,14 @@ header {visibility: hidden;}
     background-color: var(--secondary-background-color); color: var(--text-color);
     border: 1px solid var(--primary-color); border-radius: 8px;
 }
+
+/* --- THIS IS THE FIX --- */
+/* We remove the background and border to make the columns blend in */
 div[data-testid="column"] {
-    background: var(--secondary-background-color);
-    border: 1px solid #1B1C2A;
+    /* background: var(--secondary-background-color); */ /* <-- REMOVED */
+    /* border: 1px solid #1B1C2A; */ /* <-- REMOVED */
     border-radius: 10px;
-    padding: 20px;
+    padding: 10px; /* Kept some padding for spacing */
 }
 </style>
 """, unsafe_allow_html=True)
@@ -65,7 +68,7 @@ except Exception as e:
     st.stop()
 
 DB_FAISS_PATH = "vectorstores/db_faiss"
-MODEL_NAME = "gemini-2.5-flash-lite"
+MODEL_NAME = "gemini-1.5-flash-latest"
 
 
 # --- RAG PROMPT TEMPLATE (for Column 2) ---
@@ -95,10 +98,7 @@ def load_models_and_db():
         db = FAISS.load_local(DB_FAISS_PATH, embeddings, allow_dangerous_deserialization=True)
         llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.7)
         
-        # --- THIS IS THE FIX ---
-        # We will now use "similarity_score_threshold"
-        # This tells the retriever to fetch up to 3 docs (k=3),
-        # but only if their similarity score is 0.5 or higher.
+        # Using the "smart" retriever with a threshold
         retriever = db.as_retriever(
             search_type="similarity_score_threshold",
             search_kwargs={
@@ -106,7 +106,6 @@ def load_models_and_db():
                 "score_threshold": 0.5
             }
         )
-        # --- END OF FIX ---
         
         return retriever, llm
     except Exception as e:
@@ -226,14 +225,10 @@ with col2:
                         st.divider()
                         st.subheader("Sources I used to answer you:")
                         
-                        # --- THIS IS THE FIX ---
-                        # If the threshold is met, docs will have 1, 2, or 3 items
-                        # If not, docs will be an empty list []
                         if docs:
                             for doc in docs:
                                 st.info(f"**From {doc.metadata.get('source', 'Unknown Guide')}:**\n\n...{doc.page_content}...")
                         else:
-                            # This will now trigger the AI's "I'm sorry" message
                             st.warning("I couldn't find a specific guide for your question, so the AI answered from its general knowledge.")
                 
                 except Exception as e:

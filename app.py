@@ -11,6 +11,7 @@ from operator import itemgetter
 from PIL import Image 
 from langchain_core.messages import HumanMessage 
 import base64
+import json
 
 # --- CONFIGURATION & PAGE SETUP ---
 st.set_page_config(page_title="Nyay-Saathi", page_icon="🤝", layout="wide")
@@ -71,7 +72,6 @@ MODEL_NAME = "gemini-2.5-flash"
 
 
 # --- RAG PROMPT TEMPLATE ---
-# --- NEW: Updated prompt to accept document_context ---
 rag_prompt_template = """
 You are 'Nyay-Saathi,' a kind legal friend.
 A common Indian citizen is asking for help.
@@ -110,7 +110,7 @@ def get_models_and_db():
             search_type="similarity_score_threshold",
             search_kwargs={
                 "k": 3,
-                "score_threshold": 0.3
+                "score_threshold": 0.3 # Your tuned threshold
             }
         )
         
@@ -127,7 +127,6 @@ def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
 # --- THE RAG CHAIN ---
-# --- NEW: Updated RAG chain to accept document_context ---
 rag_prompt = PromptTemplate.from_template(rag_prompt_template)
 
 rag_chain_with_sources = RunnableParallel(
@@ -136,7 +135,7 @@ rag_chain_with_sources = RunnableParallel(
         "question": itemgetter("question"),
         "language": itemgetter("language"),
         "chat_history": itemgetter("chat_history"),
-        "document_context": itemgetter("document_context") # Pass through
+        "document_context": itemgetter("document_context")
     }
 ) | {
     "answer": (
@@ -145,24 +144,52 @@ rag_chain_with_sources = RunnableParallel(
             "question": itemgetter("question"),
             "language": itemgetter("language"),
             "chat_history": itemgetter("chat_history"),
-            "document_context": itemgetter("document_context") # Pass to prompt
+            "document_context": itemgetter("document_context")
         }
         | rag_prompt
         | llm
         | StrOutputParser()
     ),
-    "sources": itemgetter("context") # Sources still come from the retriever
+    "sources": itemgetter("context")
 }
 
 # --- THE APP UI ---
 st.title("🤝 Nyay-Saathi (Justice Companion)")
 st.markdown("Your legal friend, in your pocket. Built for India.")
 
-# --- LANGUAGE SELECTOR ---
-language = st.selectbox(
-    "Choose your language:",
-    ("Simple English", "Hindi (in Roman script)", "Kannada", "Tamil", "Telugu", "Marathi")
-)
+# --- NEW: SESSION STATE INITIALIZATION ---
+# We initialize ALL our state variables at the top
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "document_context" not in st.session_state:
+    st.session_state.document_context = "No document uploaded."
+if "uploaded_file_bytes" not in st.session_state:
+    st.session_state.uploaded_file_bytes = None
+if "uploaded_file_type" not in st.session_state:
+    st.session_state.uploaded_file_type = None
+if "samjhao_explanation" not in st.session_state:
+    st.session_state.samjhao_explanation = None
+
+# --- NEW: "START NEW SESSION" BUTTON ---
+def clear_session():
+    st.session_state.messages = []
+    st.session_state.document_context = "No document uploaded."
+    st.session_state.uploaded_file_bytes = None
+    st.session_state.uploaded_file_type = None
+    st.session_state.samjhao_explanation = None
+
+# Place language selector and clear button side-by-side
+col1, col2 = st.columns([3, 1])
+with col1:
+    language = st.selectbox(
+        "Choose your language:",
+        ("Simple English", "Hindi (in Roman script)", "Kannada", "Tamil", "Telugu", "Marathi")
+    )
+with col2:
+    st.write("") # Add space for alignment
+    st.write("")
+    st.button("Start New Session ♻️", on_click=clear_session, type="primary")
+
 
 st.divider()
 
@@ -170,16 +197,27 @@ st.divider()
 tab1, tab2 = st.tabs(["**Samjhao** (Explain this Document)", "**Kya Karoon?** (Ask a Question)"])
 
 # --- TAB 1: SAMJHAO (EXPLAIN) ---
+# --- NEW: THIS TAB IS NOW FULLY STATEFUL ---
 with tab1:
     st.header("Upload a Legal Document to Explain")
     st.write("Take a photo (or upload a PDF) of your legal notice or agreement.")
     
-    uploaded_file = st.file_uploader("Choose a file...", type=["jpg", "jpeg", "png", "pdf"])
+    uploaded_file = st.file_uploader("Choose a file...", type=["jpg", "jpeg", "png", "pdf"], key="file_uploader")
     
+    # Check if a file has just been uploaded
     if uploaded_file is not None:
-        file_bytes = uploaded_file.getvalue()
-        file_type = uploaded_file.type
+        # Save the new file to session state, clearing old explanations
+        st.session_state.uploaded_file_bytes = uploaded_file.getvalue()
+        st.session_state.uploaded_file_type = uploaded_file.type
+        st.session_state.samjhao_explanation = None # Clear old explanation
+        st.session_state.document_context = "No document uploaded." # Clear old context
+    
+    # Display logic: ALWAYS read from session state
+    if st.session_state.uploaded_file_bytes is not None:
+        file_bytes = st.session_state.uploaded_file_bytes
+        file_type = st.session_state.uploaded_file_type
         
+        # Display the file
         if "image" in file_type:
             image = Image.open(uploaded_file)
             st.image(image, caption="Your Uploaded Document", use_column_width=True)
@@ -188,97 +226,75 @@ with tab1:
         
         if st.button("Samjhao!", type="primary", key="samjhao_button"):
             
-            # --- NEW: We will run two AI calls ---
+            spinner_text = "Your friend is reading and explaining..."
+            if "image" in file_type:
+                spinner_text = "Reading your image... (this can take 15-30s)"
             
-            # 1. The original "Explain" call
-            with st.spinner("Your friend is reading and explaining..."):
+            with st.spinner(spinner_text):
                 try:
                     model = genai.GenerativeModel(MODEL_NAME)
                     
-                    prompt_text_explain = f"""
-                    You are 'Nyay-Saathi,' a kind legal friend.
-                    The user has uploaded a document (MIME type: {file_type}).
-                    First, extract all the text you can see from this document.
-                    Then, explain that extracted text in simple, everyday {language}.
-                    Do not use any legal jargon.
-                    Identify the 3 most important parts for the user (like dates, names, or actions they must take).
-                    The user is scared and confused. Be kind and reassuring.
-
-                    Your Simple {language} Explanation:
+                    prompt_text_multi = f"""
+                    You are an AI assistant... (etc.)
+                    Respond with ONLY a JSON object in this format:
+                    {{
+                      "raw_text": "The raw extracted text...",
+                      "explanation": "Your simple {language} explanation..."
+                    }}
                     """
                     
                     data_part = {'mime_type': file_type, 'data': file_bytes}
-                    response_explain = model.generate_content([prompt_text_explain, data_part])
+                    response = model.generate_content([prompt_text_multi, data_part])
+                    clean_response_text = response.text.strip().replace("```json", "").replace("```", "")
+                    response_json = json.loads(clean_response_text)
                     
-                    if response_explain.text:
-                        st.subheader(f"Here's what it means in {language}:")
-                        st.markdown(response_explain.text)
-                    else:
-                        st.error("The AI could not read the document. Please try a clearer file.")
-                        
+                    # Save results to session state
+                    st.session_state.samjhao_explanation = response_json.get("explanation")
+                    st.session_state.document_context = response_json.get("raw_text")
+
                 except Exception as e:
                     st.error(f"An error occurred: {e}")
-            
-            # 2. The new "Extract and Save" call
-            with st.spinner("Saving document context for chat..."):
-                try:
-                    model = genai.GenerativeModel(MODEL_NAME)
-                    prompt_text_extract = "Extract all text from this document. Respond with ONLY the raw text, no other conversation or pleasantries."
-                    
-                    data_part = {'mime_type': file_type, 'data': file_bytes}
-                    response_extract = model.generate_content([prompt_text_extract, data_part])
-                    
-                    if response_extract.text:
-                        # Save the raw text to the session state
-                        st.session_state.document_context = response_extract.text
-                        st.success("Context Saved! You can now ask questions about this document in the 'Kya Karoon?' tab.")
-                    else:
-                        st.warning("Could not extract text to save for chat.")
-                        
-                except Exception as e:
-                    st.warning(f"Could not save context: {e}")
+                    st.warning("The AI response might be in an invalid format. Please try again.")
+
+    # Always display the explanation if it exists in the state
+    if st.session_state.samjhao_explanation:
+        st.subheader(f"Here's what it means in {language}:")
+        st.markdown(st.session_state.samjhao_explanation)
+    
+    # Always show the context-saved message if it exists
+    if st.session_state.document_context != "No document uploaded." and st.session_state.samjhao_explanation:
+        st.success("Context Saved! You can now ask questions about this document in the 'Kya Karoon?' tab.")
+
 
 # --- TAB 2: KYA KAROON? (WHAT TO DO?) ---
 with tab2:
     st.header("Ask for a simple action plan")
     st.write("Scared? Confused? Ask a question and get a simple 3-step plan **based on real guides.**")
 
-    # 1. Initialize all session state variables
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    if "document_context" not in st.session_state:
-        st.session_state.document_context = "No document uploaded." # Set a default
-
-    # 2. Display a message if context is loaded
+    # Display a message if context is loaded
     if st.session_state.document_context != "No document uploaded.":
         with st.container():
             st.info(f"**Context Loaded:** I have your uploaded document in memory. Feel free to ask questions about it!")
 
-    # 3. Display all past messages
+    # Display all past messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
             
-            # --- THIS IS THE FIX ---
-            # 3a. Get all possible sources from the message
-            guides_sources = message.get("sources_from_guides") # This is a list
-            doc_context_used = message.get("source_from_document")   # This is a boolean
+            guides_sources = message.get("sources_from_guides")
+            doc_context_used = message.get("source_from_document")
 
-            # 3b. Only show the header if *any* source exists
             if (guides_sources and len(guides_sources) > 0) or doc_context_used:
                 st.subheader("Sources I used:")
                 
-                # 3c. Display the document context if it was used
                 if doc_context_used:
-                    st.warning(f"**From Your Uploaded Document:**\n\n...{st.session_state.document_context[:500]}...") # Show a 500-char snippet
+                    st.warning(f"**From Your Uploaded Document:**\n\n...{st.session_state.document_context[:500]}...")
                 
-                # 3d. Display the guide sources if they were found
                 if guides_sources:
                     for doc in guides_sources:
                         st.info(f"**From {doc.metadata.get('source', 'Unknown Guide')}:**\n\n...{doc.page_content}...")
-            # --- END OF FIX ---
 
-    # 4. Define the chat input box
+    # Define the chat input box
     if prompt := st.chat_input(f"Ask your follow-up question in {language}..."):
         
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -286,37 +302,29 @@ with tab2:
         with st.spinner("Your friend is checking the guides..."):
             try:
                 chat_history_str = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-4:-1]])
-                
-                # 4a. Get the context that will be used for *this* specific turn
                 current_doc_context = st.session_state.document_context
                 
                 invoke_payload = {
                     "question": prompt,
                     "language": language,
                     "chat_history": chat_history_str,
-                    "document_context": current_doc_context # Pass the saved context
+                    "document_context": current_doc_context
                 }
                 
                 response_dict = rag_chain_with_sources.invoke(invoke_payload) 
                 response = response_dict["answer"]
                 docs = response_dict["sources"]
                 
-                # --- THIS IS THE FIX ---
-                # 4b. Check if the AI *likely* used the document.
-                # A simple check: if no guides were found, the AI *must* have used the document.
-                # A smarter check would be to ask the AI, but this is faster.
                 used_document = False
                 if not docs and current_doc_context != "No document uploaded.":
                     used_document = True
 
-                # 4c. Save ALL sources to the session state
                 st.session_state.messages.append({
                     "role": "assistant",
                     "content": response,
                     "sources_from_guides": docs,
-                    "source_from_document": used_document # Save True/False
+                    "source_from_document": used_document
                 })
-                # --- END OF FIX ---
                 
                 st.rerun()
             

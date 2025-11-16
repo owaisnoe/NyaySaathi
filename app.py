@@ -7,74 +7,43 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
+from operator import itemgetter # <--- IMPORTED FOR THE RAG CHAIN
 
 # --- CONFIGURATION & PAGE SETUP ---
-# This MUST be the very first Streamlit command
 st.set_page_config(page_title="Nyay-Saathi", page_icon="🤝", layout="wide")
 
 # --- CUSTOM CSS FOR THE "PROPER WEBSITE" LAYOUT ---
 st.markdown("""
 <style>
 /* --- THEME --- */
-/* These are your colors from config.toml */
 :root {
     --primary-color: #00FFD1;
     --background-color: #08070C;
     --secondary-background-color: #1B1C2A;
     --text-color: #FAFAFA;
 }
-
-/* --- MAIN FONT --- */
-body {
-    font-family: 'sans serif';
-}
-
-/* --- HIDE STREAMLIT BRANDING --- */
+/* ... (your other CSS is here, I've hidden it for brevity) ... */
+body { font-family: 'sans serif'; }
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
-
-/* --- BUTTONS --- */
 .stButton > button {
-    border: 2px solid var(--primary-color);
-    background: transparent;
-    color: var(--primary-color);
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-weight: bold;
-    transition: all 0.3s ease-in-out;
+    border: 2px solid var(--primary-color); background: transparent; color: var(--primary-color);
+    padding: 12px 24px; border-radius: 8px; font-weight: bold; transition: all 0.3s ease-in-out;
 }
-
 .stButton > button:hover {
-    background: var(--primary-color);
-    color: var(--background-color);
-    box-shadow: 0 0 15px var(--primary-color);
+    background: var(--primary-color); color: var(--background-color); box-shadow: 0 0 15px var(--primary-color);
 }
-
-/* --- TABS --- */
 .stTabs [data-baseweb="tab"] {
-    background: transparent;
-    color: var(--text-color);
-    padding: 10px;
-    transition: all 0.3s ease;
+    background: transparent; color: var(--text-color); padding: 10px; transition: all 0.3s ease;
 }
-
-.stTabs [data-baseweb="tab"]:hover {
-    background: var(--secondary-background-color);
-}
-
+.stTabs [data-baseweb="tab"]:hover { background: var(--secondary-background-color); }
 .stTabs [data-baseweb="tab"][aria-selected="true"] {
-    background: var(--secondary-background-color);
-    color: var(--primary-color);
-    border-bottom: 3px solid var(--primary-color);
+    background: var(--secondary-background-color); color: var(--primary-color); border-bottom: 3px solid var(--primary-color);
 }
-
-/* --- TEXT AREA --- */
 .stTextArea textarea {
-    background-color: var(--secondary-background-color);
-    color: var(--text-color);
-    border: 1px solid var(--primary-color);
-    border-radius: 8px;
+    background-color: var(--secondary-background-color); color: var(--text-color);
+    border: 1px solid var(--primary-color); border-radius: 8px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -88,27 +57,30 @@ except Exception as e:
     st.stop()
 
 DB_FAISS_PATH = "vectorstores/db_faiss"
-MODEL_NAME = "gemini-2.5-flash-lite"
+MODEL_NAME = "gemini-1.5-flash-latest"
 
 # --- PROMPTS ---
-def get_samjhao_prompt(legal_text):
+def get_samjhao_prompt(legal_text, language):
+    # --- UPDATED to accept language ---
     return f"""
     The following is a confusing Indian legal document or text. 
-    Explain it in simple, everyday Hindi (using Roman script). 
+    Explain it in simple, everyday {language}. 
     Do not use any legal jargon.
     Identify the 3 most important parts for the user.
     The user is a common person who is scared and confused. Be kind and reassuring.
 
     Legal Text: "{legal_text}"
-    Simple Hindi Explanation:
+
+    Simple {language} Explanation:
     """
 
+# --- UPDATED RAG template to include language ---
 rag_prompt_template = """
 You are 'Nyay-Saathi,' a kind legal friend.
 A common Indian citizen is asking for help.
 Base your answer ONLY on the context provided below.
 Do not use any legal jargon.
-Give a simple, 3-step action plan.
+Give a simple, 3-step action plan in the following language: {language}.
 If the context is not enough, just say "I'm sorry, I don't have enough information on that. Please contact NALSA."
 
 CONTEXT:
@@ -117,7 +89,7 @@ CONTEXT:
 QUESTION:
 {question}
 
-Your Simple, 3-Step Action Plan:
+Your Simple, 3-Step Action Plan (in {language}):
 """
 
 # --- LOAD THE MODEL & VECTOR STORE ---
@@ -138,8 +110,14 @@ retriever, llm = load_models_and_db()
 
 # --- THE RAG CHAIN ---
 rag_prompt = PromptTemplate.from_template(rag_prompt_template)
+
+# --- UPDATED RAG Chain to accept a dictionary with "question" and "language" ---
 rag_chain = (
-    {"context": retriever, "question": RunnablePassthrough()}
+    {
+        "context": itemgetter("question") | retriever, # Get "question", pass to retriever
+        "question": itemgetter("question"),
+        "language": itemgetter("language")
+    }
     | rag_prompt
     | llm
     | StrOutputParser()
@@ -149,13 +127,21 @@ rag_chain = (
 def get_llm_response(prompt):
     try:
         response = llm.invoke(prompt)
-        return response
+        return response.content
     except Exception as e:
         return f"An error occurred: {e}"
 
 # --- THE APP UI ---
 st.title("🤝 Nyay-Saathi (Justice Companion)")
 st.markdown("Your legal friend, in your pocket. Built for India.")
+
+# --- NEW LANGUAGE SELECTOR ---
+language = st.selectbox(
+    "Choose your language:",
+    ("Simple English", "Hindi (in Roman script)", "Kannada", "Tamil", "Telugu", "Marathi")
+)
+
+st.divider()
 
 tab1, tab2 = st.tabs(["**Samjhao** (Explain this to me)", "**Kya Karoon?** (What do I do?)"])
 
@@ -170,10 +156,11 @@ with tab1:
             st.warning("Please paste some text to explain.")
         else:
             with st.spinner("Your friend is thinking..."):
-                prompt = get_samjhao_prompt(legal_text)
+                # --- UPDATED to pass the language ---
+                prompt = get_samjhao_prompt(legal_text, language)
                 response = get_llm_response(prompt)
                 if response:
-                    st.subheader("Here's what it means in simple terms:")
+                    st.subheader(f"Here's what it means in {language}:")
                     st.markdown(response)
 
 # --- TAB 2: KYA KAROON? (WHAT TO DO?) ---
@@ -189,10 +176,13 @@ with tab2:
             with st.spinner("Your friend is checking the guides..."):
                 try:
                     docs = retriever.get_relevant_documents(user_question)
-                    response = rag_chain.invoke(user_question)
+                    
+                    # --- UPDATED to pass a dictionary to the RAG chain ---
+                    invoke_payload = {"question": user_question, "language": language}
+                    response = rag_chain.invoke(invoke_payload)
                     
                     if response:
-                        st.subheader("Here is a simple 3-step plan:")
+                        st.subheader(f"Here is a simple 3-step plan (in {language}):")
                         st.markdown(response)
                         st.divider()
                         st.subheader("Sources I used to answer you:")

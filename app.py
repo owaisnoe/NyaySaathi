@@ -1,6 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 import os
+import base64
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.prompts import PromptTemplate
@@ -122,30 +123,42 @@ st.divider()
 
 tab1, tab2 = st.tabs(["**Samjhao** (Explain this Document)", "**Kya Karoon?** (Ask a Question)"])
 
-# --- TAB 1: SAMJHAO (EXPLAIN) - NOW WITH IMAGE & PDF UPLOAD ---
+# --- TAB 1: SAMJHAO (EXPLAIN) - NOW WITH PDF & IMAGE (FIXED) ---
 with tab1:
     st.header("Upload a Legal Document to Explain")
     st.write("Take a photo (or upload a PDF) of your legal notice or agreement.")
     
-    # --- UPDATED to accept PDF ---
     uploaded_file = st.file_uploader("Choose a file...", type=["jpg", "jpeg", "png", "pdf"])
     
     if uploaded_file is not None:
-        # --- Handle display logic ---
+        file_bytes = uploaded_file.getvalue()
         file_type = uploaded_file.type
         
+        # --- Display logic ---
         if "image" in file_type:
             image = Image.open(uploaded_file)
             st.image(image, caption="Your Uploaded Document", use_column_width=True)
         elif "pdf" in file_type:
             st.info("PDF file uploaded. Click 'Samjhao!' to explain.")
-            # (Streamlit can't display a PDF inline easily, so we just confirm)
         
         if st.button("Samjhao!", type="primary", key="samjhao_button"):
             with st.spinner("Your friend is reading the document..."):
                 try:
-                    file_bytes = uploaded_file.getvalue()
+                    # --- THIS IS THE FIX ---
+                    # 1. Base64-encode the file bytes
+                    file_base64 = base64.b64encode(file_bytes).decode()
                     
+                    # 2. Create the correct data: URI
+                    data_uri = f"data:{file_type};base64,{file_base64}"
+                    
+                    # 3. Create the data_part dictionary using "image_url"
+                    data_part = {
+                        "type": "image_url",
+                        "image_url": data_uri
+                    }
+                    
+                    # --- END OF FIX ---
+
                     # Create the prompt text (same for both file types)
                     prompt_text = f"""
                     You are 'Nyay-Saathi,' a kind legal friend.
@@ -159,22 +172,11 @@ with tab1:
                     Your Simple {language} Explanation:
                     """
                     
-                    # --- UPDATED: Create the correct data part for the LLM ---
-                    if "image" in file_type:
-                        # Pass image bytes directly
-                        data_part = {"type": "image_url", "image_url": file_bytes}
-                    elif "pdf" in file_type:
-                        # Pass PDF bytes directly with the correct mime_type
-                        data_part = {"type": "inline_data", "mime_type": "application/pdf", "data": file_bytes}
-                    else:
-                        st.error(f"Unsupported file type: {file_type}")
-                        st.stop()
-
                     # Create the multimodal message
                     message = HumanMessage(
                         content=[
                             {"type": "text", "text": prompt_text},
-                            data_part # Add the image or PDF
+                            data_part # Add the image or PDF data
                         ]
                     )
                     

@@ -238,33 +238,47 @@ with tab1:
                 except Exception as e:
                     st.warning(f"Could not save context: {e}")
 
-
 # --- TAB 2: KYA KAROON? (WHAT TO DO?) ---
 with tab2:
     st.header("Ask for a simple action plan")
     st.write("Scared? Confused? Ask a question and get a simple 3-step plan **based on real guides.**")
 
-    # --- NEW: Initialize all session state variables ---
+    # 1. Initialize all session state variables
     if "messages" not in st.session_state:
         st.session_state.messages = []
     if "document_context" not in st.session_state:
-        st.session_state.document_context = None
+        st.session_state.document_context = "No document uploaded." # Set a default
 
-    # --- NEW: Display a message if context is loaded ---
-    if st.session_state.document_context:
+    # 2. Display a message if context is loaded
+    if st.session_state.document_context != "No document uploaded.":
         with st.container():
             st.info(f"**Context Loaded:** I have your uploaded document in memory. Feel free to ask questions about it!")
 
-    # 2. Display all past messages
+    # 3. Display all past messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-            if "sources" in message:
-                st.subheader("Sources I used:")
-                for doc in message["sources"]:
-                    st.info(f"**From {doc.metadata.get('source', 'Unknown Guide')}:**\n\n...{doc.page_content}...")
+            
+            # --- THIS IS THE FIX ---
+            # 3a. Get all possible sources from the message
+            guides_sources = message.get("sources_from_guides") # This is a list
+            doc_context_used = message.get("source_from_document")   # This is a boolean
 
-    # 3. Define the chat input box
+            # 3b. Only show the header if *any* source exists
+            if (guides_sources and len(guides_sources) > 0) or doc_context_used:
+                st.subheader("Sources I used:")
+                
+                # 3c. Display the document context if it was used
+                if doc_context_used:
+                    st.warning(f"**From Your Uploaded Document:**\n\n...{st.session_state.document_context[:500]}...") # Show a 500-char snippet
+                
+                # 3d. Display the guide sources if they were found
+                if guides_sources:
+                    for doc in guides_sources:
+                        st.info(f"**From {doc.metadata.get('source', 'Unknown Guide')}:**\n\n...{doc.page_content}...")
+            # --- END OF FIX ---
+
+    # 4. Define the chat input box
     if prompt := st.chat_input(f"Ask your follow-up question in {language}..."):
         
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -273,23 +287,36 @@ with tab2:
             try:
                 chat_history_str = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-4:-1]])
                 
-                # --- NEW: Pass the document_context from session state ---
+                # 4a. Get the context that will be used for *this* specific turn
+                current_doc_context = st.session_state.document_context
+                
                 invoke_payload = {
                     "question": prompt,
                     "language": language,
                     "chat_history": chat_history_str,
-                    "document_context": st.session_state.document_context
+                    "document_context": current_doc_context # Pass the saved context
                 }
                 
                 response_dict = rag_chain_with_sources.invoke(invoke_payload) 
                 response = response_dict["answer"]
                 docs = response_dict["sources"]
                 
+                # --- THIS IS THE FIX ---
+                # 4b. Check if the AI *likely* used the document.
+                # A simple check: if no guides were found, the AI *must* have used the document.
+                # A smarter check would be to ask the AI, but this is faster.
+                used_document = False
+                if not docs and current_doc_context != "No document uploaded.":
+                    used_document = True
+
+                # 4c. Save ALL sources to the session state
                 st.session_state.messages.append({
                     "role": "assistant",
                     "content": response,
-                    "sources": docs
+                    "sources_from_guides": docs,
+                    "source_from_document": used_document # Save True/False
                 })
+                # --- END OF FIX ---
                 
                 st.rerun()
             

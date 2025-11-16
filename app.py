@@ -8,8 +8,8 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
 from operator import itemgetter
-from PIL import Image # <--- NEW IMPORT FOR IMAGE HANDLING
-from langchain_core.messages import HumanMessage # <--- NEW IMPORT FOR MULTIMODAL
+from PIL import Image 
+from langchain_core.messages import HumanMessage 
 
 # --- CONFIGURATION & PAGE SETUP ---
 st.set_page_config(page_title="Nyay-Saathi", page_icon="🤝", layout="wide")
@@ -62,7 +62,6 @@ MODEL_NAME = "gemini-2.5-flash-lite"
 
 
 # --- RAG PROMPT TEMPLATE (for Tab 2) ---
-# This is NOT used for the image tab
 rag_prompt_template = """
 You are 'Nyay-Saathi,' a kind legal friend.
 A common Indian citizen is asking for help.
@@ -123,29 +122,35 @@ st.divider()
 
 tab1, tab2 = st.tabs(["**Samjhao** (Explain this Document)", "**Kya Karoon?** (Ask a Question)"])
 
-# --- TAB 1: SAMJHAO (EXPLAIN) - NOW WITH IMAGE UPLOAD ---
+# --- TAB 1: SAMJHAO (EXPLAIN) - NOW WITH IMAGE & PDF UPLOAD ---
 with tab1:
     st.header("Upload a Legal Document to Explain")
-    st.write("Take a photo of your legal notice or agreement and upload it here.")
+    st.write("Take a photo (or upload a PDF) of your legal notice or agreement.")
     
-    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+    # --- UPDATED to accept PDF ---
+    uploaded_file = st.file_uploader("Choose a file...", type=["jpg", "jpeg", "png", "pdf"])
     
     if uploaded_file is not None:
-        # Display the uploaded image
-        image = Image.open(uploaded_file)
-        st.image(image, caption="Your Uploaded Document", use_column_width=True)
+        # --- Handle display logic ---
+        file_type = uploaded_file.type
+        
+        if "image" in file_type:
+            image = Image.open(uploaded_file)
+            st.image(image, caption="Your Uploaded Document", use_column_width=True)
+        elif "pdf" in file_type:
+            st.info("PDF file uploaded. Click 'Samjhao!' to explain.")
+            # (Streamlit can't display a PDF inline easily, so we just confirm)
         
         if st.button("Samjhao!", type="primary", key="samjhao_button"):
             with st.spinner("Your friend is reading the document..."):
                 try:
-                    # Get the image bytes
-                    image_bytes = uploaded_file.getvalue()
+                    file_bytes = uploaded_file.getvalue()
                     
-                    # Create the new multimodal prompt
+                    # Create the prompt text (same for both file types)
                     prompt_text = f"""
                     You are 'Nyay-Saathi,' a kind legal friend.
-                    The user has uploaded an image of a legal document.
-                    First, extract all the text you can see from this image.
+                    The user has uploaded a document (image or PDF).
+                    First, extract all the text you can see from this document.
                     Then, explain that extracted text in simple, everyday {language}.
                     Do not use any legal jargon.
                     Identify the 3 most important parts for the user (like dates, names, or actions they must take).
@@ -154,11 +159,22 @@ with tab1:
                     Your Simple {language} Explanation:
                     """
                     
+                    # --- UPDATED: Create the correct data part for the LLM ---
+                    if "image" in file_type:
+                        # Pass image bytes directly
+                        data_part = {"type": "image_url", "image_url": file_bytes}
+                    elif "pdf" in file_type:
+                        # Pass PDF bytes directly with the correct mime_type
+                        data_part = {"type": "inline_data", "mime_type": "application/pdf", "data": file_bytes}
+                    else:
+                        st.error(f"Unsupported file type: {file_type}")
+                        st.stop()
+
                     # Create the multimodal message
                     message = HumanMessage(
                         content=[
                             {"type": "text", "text": prompt_text},
-                            {"type": "image_url", "image_url": image_bytes}
+                            data_part # Add the image or PDF
                         ]
                     )
                     
@@ -169,7 +185,7 @@ with tab1:
                         st.subheader(f"Here's what it means in {language}:")
                         st.markdown(response.content)
                     else:
-                        st.error("The AI could not read the document. Please try a clearer picture.")
+                        st.error("The AI could not read the document. Please try a clearer file.")
                         
                 except Exception as e:
                     st.error(f"An error occurred: {e}")

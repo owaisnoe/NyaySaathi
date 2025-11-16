@@ -71,20 +71,25 @@ MODEL_NAME = "gemini-2.5-flash-lite"
 
 
 # --- RAG PROMPT TEMPLATE ---
+# --- NEW: Updated prompt to accept document_context ---
 rag_prompt_template = """
 You are 'Nyay-Saathi,' a kind legal friend.
 A common Indian citizen is asking for help.
-Answer their 'new question' based ONLY on the context provided.
-If the new question is a follow-up, use the 'chat history' to understand it.
+You have two sources of information. Prioritize the MOST relevant one.
+1. CONTEXT_FROM_GUIDES: (General guides from a database)
+{context}
+
+2. DOCUMENT_CONTEXT: (Specific text from a document the user uploaded)
+{document_context}
+
+Answer the user's 'new question' based on the most relevant context.
+If the 'new question' is a follow-up, use the 'chat history' to understand it.
 Do not use any legal jargon.
 Give a simple, step-by-step action plan in the following language: {language}.
-If the context is not enough, just say "I'm sorry, I don't have enough information on that. Please contact NALSA."
+If no context is relevant, just say "I'm sorry, I don't have enough information on that. Please contact NALSA."
 
 CHAT HISTORY:
 {chat_history}
-
-CONTEXT:
-{context}
 
 NEW QUESTION:
 {question}
@@ -94,7 +99,7 @@ Your Simple, Step-by-Step Action Plan (in {language}):
 
 # --- LOAD THE MODEL & VECTOR STORE ---
 @st.cache_resource
-def get_models_and_db(): # Renamed to clear cache
+def get_models_and_db():
     try:
         embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2',
                                            model_kwargs={'device': 'cpu'})
@@ -122,6 +127,7 @@ def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
 # --- THE RAG CHAIN ---
+# --- NEW: Updated RAG chain to accept document_context ---
 rag_prompt = PromptTemplate.from_template(rag_prompt_template)
 
 rag_chain_with_sources = RunnableParallel(
@@ -129,7 +135,8 @@ rag_chain_with_sources = RunnableParallel(
         "context": itemgetter("question") | retriever,
         "question": itemgetter("question"),
         "language": itemgetter("language"),
-        "chat_history": itemgetter("chat_history")
+        "chat_history": itemgetter("chat_history"),
+        "document_context": itemgetter("document_context") # Pass through
     }
 ) | {
     "answer": (
@@ -137,13 +144,14 @@ rag_chain_with_sources = RunnableParallel(
             "context": (lambda x: format_docs(x["context"])),
             "question": itemgetter("question"),
             "language": itemgetter("language"),
-            "chat_history": itemgetter("chat_history")
+            "chat_history": itemgetter("chat_history"),
+            "document_context": itemgetter("document_context") # Pass to prompt
         }
         | rag_prompt
         | llm
         | StrOutputParser()
     ),
-    "sources": itemgetter("context")
+    "sources": itemgetter("context") # Sources still come from the retriever
 }
 
 # --- THE APP UI ---
@@ -158,7 +166,7 @@ language = st.selectbox(
 
 st.divider()
 
-# --- THE NEW TAB-BASED LAYOUT ---
+# --- THE TAB-BASED LAYOUT ---
 tab1, tab2 = st.tabs(["**Samjhao** (Explain this Document)", "**Kya Karoon?** (Ask a Question)"])
 
 # --- TAB 1: SAMJHAO (EXPLAIN) ---
@@ -179,10 +187,15 @@ with tab1:
             st.info("PDF file uploaded. Click 'Samjhao!' to explain.")
         
         if st.button("Samjhao!", type="primary", key="samjhao_button"):
-            with st.spinner("Your friend is reading the document..."):
+            
+            # --- NEW: We will run two AI calls ---
+            
+            # 1. The original "Explain" call
+            with st.spinner("Your friend is reading and explaining..."):
                 try:
                     model = genai.GenerativeModel(MODEL_NAME)
-                    prompt_text = f"""
+                    
+                    prompt_text_explain = f"""
                     You are 'Nyay-Saathi,' a kind legal friend.
                     The user has uploaded a document (MIME type: {file_type}).
                     First, extract all the text you can see from this document.
@@ -195,24 +208,52 @@ with tab1:
                     """
                     
                     data_part = {'mime_type': file_type, 'data': file_bytes}
-                    response = model.generate_content([prompt_text, data_part])
+                    response_explain = model.generate_content([prompt_text_explain, data_part])
                     
-                    if response.text:
+                    if response_explain.text:
                         st.subheader(f"Here's what it means in {language}:")
-                        st.markdown(response.text)
+                        st.markdown(response_explain.text)
                     else:
                         st.error("The AI could not read the document. Please try a clearer file.")
+                        
                 except Exception as e:
                     st.error(f"An error occurred: {e}")
+            
+            # 2. The new "Extract and Save" call
+            with st.spinner("Saving document context for chat..."):
+                try:
+                    model = genai.GenerativeModel(MODEL_NAME)
+                    prompt_text_extract = "Extract all text from this document. Respond with ONLY the raw text, no other conversation or pleasantries."
+                    
+                    data_part = {'mime_type': file_type, 'data': file_bytes}
+                    response_extract = model.generate_content([prompt_text_extract, data_part])
+                    
+                    if response_extract.text:
+                        # Save the raw text to the session state
+                        st.session_state.document_context = response_extract.text
+                        st.success("Context Saved! You can now ask questions about this document in the 'Kya Karoon?' tab.")
+                    else:
+                        st.warning("Could not extract text to save for chat.")
+                        
+                except Exception as e:
+                    st.warning(f"Could not save context: {e}")
+
 
 # --- TAB 2: KYA KAROON? (WHAT TO DO?) ---
 with tab2:
     st.header("Ask for a simple action plan")
     st.write("Scared? Confused? Ask a question and get a simple 3-step plan **based on real guides.**")
 
-    # 1. Initialize chat history
+    # --- NEW: Initialize all session state variables ---
     if "messages" not in st.session_state:
         st.session_state.messages = []
+    if "document_context" not in st.session_state:
+        st.session_state.document_context = None
+
+    # --- NEW: Display a message if context is loaded ---
+    if st.session_state.document_context:
+        with st.container():
+            st.info(f"**Context Loaded:** I have your uploaded document in memory. Feel free to ask questions about it!")
 
     # 2. Display all past messages
     for message in st.session_state.messages:
@@ -223,7 +264,7 @@ with tab2:
                 for doc in message["sources"]:
                     st.info(f"**From {doc.metadata.get('source', 'Unknown Guide')}:**\n\n...{doc.page_content}...")
 
-    # 3. Define the chat input box (it will now appear at the bottom)
+    # 3. Define the chat input box
     if prompt := st.chat_input(f"Ask your follow-up question in {language}..."):
         
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -231,10 +272,13 @@ with tab2:
         with st.spinner("Your friend is checking the guides..."):
             try:
                 chat_history_str = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-4:-1]])
+                
+                # --- NEW: Pass the document_context from session state ---
                 invoke_payload = {
                     "question": prompt,
                     "language": language,
-                    "chat_history": chat_history_str
+                    "chat_history": chat_history_str,
+                    "document_context": st.session_state.document_context
                 }
                 
                 response_dict = rag_chain_with_sources.invoke(invoke_payload) 

@@ -1,12 +1,5 @@
-# helpers.py
-"""
-Helpers for Nyay-Saathi.
-- get_cached_genai_model: returns genai.GenerativeModel(model_name)
-- retry_call: simple retry wrapper
-- JSON parsing helpers: robustly extract JSON from noisy LLM output
-- doc_hash: accepts bytes/str
-- format_docs / cached_retrieve: small utilities used by app.py
-"""
+# helpers.py - Minimal, robust utilities for Nyay-Saathi
+# This file is intentionally small and import-safe to avoid ImportError on startup.
 
 import re
 import json
@@ -14,6 +7,7 @@ import time
 import hashlib
 from typing import List, Optional, Tuple
 
+# Streamlit is optional here; if not available, create a small dummy shim
 try:
     import streamlit as st
 except Exception:
@@ -28,27 +22,28 @@ except Exception:
             return dec
     st = _DummySt()
 
+# google.generativeai is optional at import time. We only import it if used at runtime.
 try:
     import google.generativeai as genai
 except Exception:
     genai = None
 
 # ---------------------------------------------------------------------------
-# Model factory (no temperature at init; matches older/new SDKs)
+# Model factory (kept minimal and defensive)
 # ---------------------------------------------------------------------------
 @st.cache_resource
 def get_cached_genai_model(model_name: str):
     """
-    Return a cached genai.GenerativeModel instance keyed by model_name.
-    Do not pass per-call generation args here (some old SDKs expect generation_config at init).
+    Return a genai.GenerativeModel instance.
+    This factory tries to construct the model in a way compatible with multiple SDK versions.
+    genai must be configured (genai.configure(...)) before calling this.
     """
     if genai is None:
-        raise RuntimeError("google.generativeai (genai) is not available.")
-    # Construct model with minimal args — callers will not pass temperature to generate_content
+        raise RuntimeError("google.generativeai (genai) is not available. Make sure package is installed.")
+    # Try simple constructor forms (some SDKs accept model_name positional, others named)
     try:
         return genai.GenerativeModel(model_name)
     except TypeError:
-        # older/newer oddities: try named arg
         return genai.GenerativeModel(model_name=model_name)
 
 # ---------------------------------------------------------------------------
@@ -56,7 +51,7 @@ def get_cached_genai_model(model_name: str):
 # ---------------------------------------------------------------------------
 def retry_call(func, tries: int = 2, backoff: float = 1.0, allowed_exceptions: Tuple = (Exception,)):
     """
-    Retry wrapper with exponential-ish backoff.
+    Simple retry, used around network/LLM calls.
     Usage: retry_call(lambda: genai_model.generate_content(...))
     """
     for attempt in range(tries):
@@ -68,16 +63,14 @@ def retry_call(func, tries: int = 2, backoff: float = 1.0, allowed_exceptions: T
             time.sleep(backoff * (attempt + 1))
 
 # ---------------------------------------------------------------------------
-# JSON parsing helpers (robust)
+# JSON parsing helpers (robust to code-fence wrappers)
 # ---------------------------------------------------------------------------
 def clean_code_fences(text: str) -> str:
-    """Strip markdown code fences like ```json and trailing fences."""
     if not text:
         return ""
     return re.sub(r"```(?:json)?", "", text).strip()
 
 def extract_json_block(text: str) -> Optional[str]:
-    """Find first balanced {...} JSON block and return it, else None."""
     if not text:
         return None
     start = None
@@ -97,41 +90,30 @@ def extract_json_block(text: str) -> Optional[str]:
     return None
 
 def safe_parse_json(text: str) -> dict:
-    """
-    Try to parse JSON from text. Steps:
-      1) try entire text
-      2) find a balanced {...} block and parse that
-      3) try light quotes normalization
-    Raises ValueError with helpful message on failure.
-    """
     if not text or not text.strip():
-        raise ValueError("No text to parse as JSON.")
+        raise ValueError("No text provided for JSON parsing.")
     t = clean_code_fences(text)
-    # attempt direct parse
     try:
         return json.loads(t)
     except Exception:
         pass
-    # try block extraction
     block = extract_json_block(t)
     if block:
         try:
             return json.loads(block)
         except Exception as e:
-            raise ValueError(f"Found JSON-like block but failed to parse: {e}\nBlock snippet: {block[:1000]}")
-    # fallback: normalize quotes and try
-    alt = t.strip().replace("''", '"').replace("‘", '"').replace("’", '"')
-    alt = alt.replace("“", '"').replace("”", '"')
+            raise ValueError(f"Found JSON-like block but failed to parse: {e}\nBlock: {block[:500]}")
+    alt = t.strip().replace("''", '"').replace("‘", '"').replace("’", '"').replace('“', '"').replace('”', '"')
     try:
         return json.loads(alt)
     except Exception as e:
-        raise ValueError(f"Unable to parse JSON: {e}\nSnippet: {t[:1000]}")
+        raise ValueError(f"Unable to parse JSON: {e}\nSnippet: {t[:500]}")
 
 def parse_genai_json_response(text: str) -> dict:
     return safe_parse_json(text)
 
 # ---------------------------------------------------------------------------
-# Small helpers used by app.py
+# Small helpers
 # ---------------------------------------------------------------------------
 def doc_hash(text: str | bytes) -> str:
     if isinstance(text, (bytes, bytearray)):
@@ -144,17 +126,22 @@ def format_docs(docs: List, per_doc_chars: int = 1000) -> str:
     parts = []
     for d in docs:
         meta = getattr(d, "metadata", {}) or {}
-        src = meta.get("source") or meta.get("title") or "guide"
+        src_name = meta.get("source") or meta.get("title") or "guide"
         content = (getattr(d, "page_content", "") or "")[:per_doc_chars]
-        parts.append(f"SOURCE: {src}\n{content}...")
+        parts.append(f"SOURCE: {src_name}\n{content}...")
     return "\n\n".join(parts)
 
 def cached_retrieve(retriever, question: str, k: int = 3):
+    """
+    Minimal retrieval cache using st.session_state to avoid repeated calls.
+    Falls back gracefully if retriever does not provide get_relevant_documents.
+    """
     if not hasattr(st, "session_state"):
         try:
             return retriever.get_relevant_documents(question)[:k]
         except Exception:
             return retriever.retrieve(question)[:k]
+
     cache = st.session_state.setdefault("_retrieval_cache", {})
     key = "retrieval::" + hashlib.sha256(question.encode("utf-8")).hexdigest() + f"::k={k}"
     if key in cache:

@@ -1,415 +1,373 @@
 import streamlit as st
-import google.generativeai as genai
-import os
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnableParallel
-from langchain_core.output_parsers import StrOutputParser
-from langchain_google_genai import ChatGoogleGenerativeAI
-from operator import itemgetter
-from PIL import Image
-import json
-import io
-from document_generator import show_document_generator
+from fpdf import FPDF, HTMLMixin
+import datetime
+import re
 
-# --- CONFIGURATION & PAGE SETUP ---
-# This MUST be the very first Streamlit command
-st.set_page_config(
-    page_title="Nyay-Saathi", 
-    page_icon="🤝", 
-    layout="wide", 
-    initial_sidebar_state="collapsed" # Collapse sidebar for a cleaner look
-)
-
-# --- CUSTOM CSS ---
-st.markdown("""
-<style>
-/* ... (Your custom CSS is here, hidden for brevity) ... */
-:root {
-    --primary-color: #00FFD1;
-    --background-color: #08070C;
-    --secondary-background-color: #1B1C2A;
-    --text-color: #FAFAFA;
-}
-body { font-family: 'sans serif'; }
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-.stButton > button {
-    border: 2px solid var(--primary-color); background: transparent; color: var(--primary-color);
-    padding: 12px 24px; border-radius: 8px; font-weight: bold; transition: all 0.3s ease-in-out;
-}
-.stButton > button:hover {
-    background: var(--primary-color); color: var(--background-color); box-shadow: 0 0 15px var(--primary-color);
-}
-.stTextArea textarea {
-    background-color: var(--secondary-background-color); color: var(--text-color);
-    border: 1px solid var(--primary-color); border-radius: 8px;
-}
-/* Style the chat messages */
-div[data-testid="chat-message-container"] {
-    background-color: var(--secondary-background-color);
-    border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 10px;
-}
-/* This is the tab styling from before */
-.stTabs [data-baseweb="tab"] {
-    background: transparent; color: var(--text-color); padding: 10px; transition: all 0.3s ease;
-}
-.stTabs [data-baseweb="tab"]:hover { background: var(--secondary-background-color); }
-.stTabs [data-baseweb="tab"][aria-selected="true"] {
-    background: var(--secondary-background-color); color: var(--primary-color); border-bottom: 3px solid var(--primary-color);
-}
-/* Center the landing page elements */
-div[data-testid="stVerticalBlock"] {
-    align-items: center;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-# --- API KEY CONFIGURATION ---
-try:
-    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-except Exception as e:
-    st.error(f"Error configuring: {e}. Please check your API key in Streamlit Secrets.")
-    st.stop()
-
-DB_FAISS_PATH = "vectorstores/db_faiss"
-MODEL_NAME = "gemini-2.5-flash"
-
-
-# --- RAG PROMPT TEMPLATE ---
-rag_prompt_template = """
-You are 'Nyay-Saathi,' a kind legal friend.
-A common Indian citizen is asking for help.
-You have two sources of information. Prioritize the MOST relevant one.
-1. CONTEXT_FROM_GUIDES: (General guides from a database)
-{context}
-
-2. DOCUMENT_CONTEXT: (Specific text from a document the user uploaded)
-{document_context}
-
-Answer the user's 'new question' based on the most relevant context.
-If the 'new question' is a follow-up, use the 'chat history' to understand it.
-Do not use any legal jargon.
-Give a simple, step-by-step action plan in the following language: {language}.
-If no context is relevant, just say "I'm sorry, I don't have enough information on that. Please contact NALSA."
-
-CHAT HISTORY:
-{chat_history}
-
-NEW QUESTION:
-{question}
-
-Your Simple, Step-by-Step Action Plan (in {language}):
-"""
-
-# --- LOAD THE MODEL & VECTOR STORE ---
-@st.cache_resource
-def get_models_and_db():
-    try:
-        embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2',
-                                           model_kwargs={'device': 'cpu'})
-        db = FAISS.load_local(DB_FAISS_PATH, embeddings, allow_dangerous_deserialization=True)
-        llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.3)
-        
-        retriever = db.as_retriever(
-            search_type="similarity_score_threshold",
-            search_kwargs={
-                "k": 3,
-                "score_threshold": 0.3 # Your tuned threshold
-            }
-        )
-        
-        return retriever, llm
-    except Exception as e:
-        st.error(f"Error loading models or vector store: {e}")
-        st.error("Did you run 'ingest.py' and push the 'vectorstores' folder to GitHub?")
-        st.stop()
-
-retriever, llm = get_models_and_db()
-
-@st.cache_resource
-def get_genai_model():
-    return genai.GenerativeModel(MODEL_NAME)
-
-# --- NEW HELPER FUNCTION ---
-def format_docs(docs):
-    return "\n\n".join(doc.page_content for doc in docs)
-
-# --- THE RAG CHAIN ---
-rag_prompt = PromptTemplate.from_template(rag_prompt_template)
-
-rag_chain_with_sources = RunnableParallel(
-    {
-        "context": itemgetter("question") | retriever,
-        "question": itemgetter("question"),
-        "language": itemgetter("language"),
-        "chat_history": itemgetter("chat_history"),
-        "document_context": itemgetter("document_context")
-    }
-) | {
-    "answer": (
-        {
-            "context": (lambda x: format_docs(x["context"])),
-            "question": itemgetter("question"),
-            "language": itemgetter("language"),
-            "chat_history": itemgetter("chat_history"),
-            "document_context": itemgetter("document_context")
+# --- CUSTOM CSS FOR ENHANCED UI ---
+def inject_custom_css():
+    st.markdown("""
+    <style>
+        /* --- FORM CONTAINER (Light Background) --- */
+        .stForm {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
-        | rag_prompt
-        | llm
-        | StrOutputParser()
-    ),
-    "sources": itemgetter("context")
-}
 
-# --- SESSION STATE INITIALIZATION ---
-# This runs once per session
-if "app_started" not in st.session_state:
-    st.session_state.app_started = False
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "document_context" not in st.session_state:
-    st.session_state.document_context = "No document uploaded."
-if "uploaded_file_bytes" not in st.session_state:
-    st.session_state.uploaded_file_bytes = None
-if "uploaded_file_type" not in st.session_state:
-    st.session_state.uploaded_file_type = None
-if "samjhao_explanation" not in st.session_state:
-    st.session_state.samjhao_explanation = None
-if "file_uploader_key" not in st.session_state:
-    st.session_state.file_uploader_key = 0
+        /* --- CRITICAL FIX: FORCE DARK TEXT INSIDE FORM --- */
+        /* This overrides the global Dark Mode white text settings */
+        
+        /* Fix for Headers (Subheaders/Titles inside form) */
+        .stForm h1, .stForm h2, .stForm h3, .stForm h4 {
+            color: #1a1a1a !important;
+            font-family: 'Arial', sans-serif;
+        }
 
+        /* Fix for Input Labels */
+        .stForm label p {
+            color: #333333 !important;
+            font-weight: 600 !important;
+            font-size: 14px !important;
+        }
+        
+        /* Fix for Standard Text/Paragraphs inside form */
+        .stForm p {
+            color: #333333 !important;
+        }
 
-# --- "START NEW SESSION" BUTTON ---
-def clear_session():
-    st.session_state.messages = []
-    st.session_state.document_context = "No document uploaded."
-    st.session_state.uploaded_file_bytes = None
-    st.session_state.uploaded_file_type = None
-    st.session_state.samjhao_explanation = None
-    # This increments the key, forcing the file uploader to reset
-    st.session_state.file_uploader_key += 1 
+        /* --- INPUT FIELDS --- */
+        .stTextInput > div > div > input, 
+        .stTextArea > div > div > textarea,
+        .stNumberInput > div > div > input {
+            border-radius: 8px;
+            border: 1px solid #cccccc;
+            padding: 12px;
+            color: #000000 !important; /* Force black text input */
+            background-color: #f9f9f9 !important;
+            transition: all 0.3s ease;
+        }
 
+        /* Input Focus State */
+        .stTextInput > div > div > input:focus, 
+        .stTextArea > div > div > textarea:focus,
+        .stNumberInput > div > div > input:focus {
+            border-color: #00FFD1;
+            background-color: #ffffff !important;
+            box-shadow: 0 0 0 2px rgba(0, 255, 209, 0.2);
+        }
 
-# --- THE APP UI ---
+        /* --- BUTTONS --- */
+        .stButton > button {
+            border-radius: 8px;
+            font-weight: 600;
+            width: 100%;
+        }
 
-# --- LANDING PAGE ---
-if not st.session_state.app_started:
-    st.title("Welcome to 🤝 Nyay-Saathi")
-    st.subheader("Your AI legal friend, built for India.")
-    # You can add a logo here if you have one in your repo
-    # st.image("logo.png", width=200) 
-    st.markdown("This tool helps you understand complex legal documents and get clear, simple action plans.")
-    st.markdown("---")
+        /* --- PREVIEW BOX --- */
+        .preview-box {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin: 20px 0;
+            color: #000000 !important; /* Force black text in preview */
+        }
+        
+        /* Make sure preview text is visible */
+        .preview-box p, .preview-box h1, .preview-box h2, .preview-box h3 {
+             color: #000000 !important;
+        }
+
+        /* --- DOWNLOAD BUTTON --- */
+        .stDownloadButton > button {
+            background-color: #4CAF50 !important;
+            color: white !important;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        /* --- ALERTS/WARNINGS --- */
+        .stAlert {
+            color: #000000 !important; /* Ensure alert text is readable */
+        }
+        
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- PDF CLASS WITH HTML SUPPORT ---
+class PDF(FPDF, HTMLMixin):
+    def header(self):
+        self.set_font('Arial', 'B', 11)
+        self.set_text_color(60, 60, 60) # Grey color for header
+        self.cell(0, 10, 'Nyay-Saathi Legal Document', 0, 1, 'R')
+        self.set_draw_color(200, 200, 200)
+        self.line(10, 18, 200, 18)
+        self.ln(8)
+
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('Arial', 'I', 8)
+        self.set_text_color(128)
+        self.cell(0, 10, f'Page {self.page_no()} | Generated on {datetime.datetime.now().strftime("%B %d, %Y")}', 0, 0, 'C')
+
+def clean_text_for_pdf(text):
+    """
+    Replaces incompatible characters for standard PDF fonts.
+    """
+    replacements = {
+        "₹": "Rs. ",
+        "“": '"', "”": '"', "‘": "'", "’": "'", 
+        "–": "-", "—": "-", 
+        "…": "...",
+        "•": "*"
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
     
-    if st.button("Click here to start", type="primary"):
-        st.session_state.app_started = True
-        st.rerun()
+    return text.encode('latin-1', 'ignore').decode('latin-1')
 
-# --- MAIN APP ---
-else:
-    st.title("🤝 Nyay-Saathi (Justice Companion)")
-    st.markdown("Your legal friend, in your pocket. Built for India.")
+def create_pdf_bytes(doc_html, doc_type):
+    """Generates a professional PDF from HTML text."""
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=20)
+    
+    safe_html = clean_text_for_pdf(doc_html)
 
-    # Place language selector and clear button side-by-side
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        language = st.selectbox(
-            "Choose your language:",
-            ("Simple English", "Hindi (in Roman script)", "Kannada", "Tamil", "Telugu", "Marathi")
-        )
-    with col2:
-        st.write("") 
-        st.write("")
-        st.button("Start New Session ♻️", on_click=clear_session, type="primary")
+    styled_html = f"""
+    <font face="Arial" size="11">
+    <h1 align="center"><b>{doc_type.upper()}</b></h1>
+    <br><br>
+    {safe_html}
+    </font>
+    """
+    
+    try:
+        pdf.write_html(styled_html)
+    except Exception as e:
+        pdf = PDF() # Reset
+        pdf.add_page()
+        pdf.set_font("Arial", size=11)
+        plain_text = safe_html.replace("<br>", "\n").replace("<b>", "").replace("</b>", "")
+        plain_text = re.sub('<.*?>', '', plain_text)
+        pdf.multi_cell(0, 6, f"Error rendering format.\n\nPlain text version:\n\n{plain_text}")
 
+    return bytes(pdf.output())
 
-    st.divider()
+def validate_inputs(inputs):
+    """Validates that required fields are filled."""
+    filled_values = [v for v in inputs.values() if v and str(v).strip()]
+    return len(filled_values) > 0
 
-    # --- THE TAB-BASED LAYOUT ---
-    # --- THE TAB-BASED LAYOUT ---
-# We need to unpack 3 variables for the 3 tabs
-    tab1, tab2, tab3 = st.tabs(["**Samjhao** (Explain)", "**Kya Karoon?** (Ask)", "**Draft Documents** (Create)"])
-
-    # --- TAB 1: SAMJHAO (EXPLAIN) ---
-    with tab1:
-        st.header("Upload a Legal Document to Explain")
-        st.write("Take a photo (or upload a PDF) of your legal notice or agreement.")
+def get_document_fields(document_type):
+    """Returns the appropriate form fields for each document type."""
+    if document_type == "Rental/Lease Agreement":
+        return {
+            "columns": True,
+            "fields": [
+                {"name": "Landlord Name", "type": "text", "required": True},
+                {"name": "Tenant Name", "type": "text", "required": True},
+                {"name": "Property Address", "type": "textarea", "required": True},
+                {"name": "Rent Amount", "type": "number", "required": True},
+                {"name": "Lease Duration", "type": "text", "placeholder": "e.g., 11 months"},
+                {"name": "Security Deposit", "type": "number"},
+                {"name": "Agreement Date", "type": "date"}
+            ]
+        }
         
-        uploaded_file = st.file_uploader(
-            "Choose a file...", 
-            type=["jpg", "jpeg", "png", "pdf"], 
-            key=st.session_state.file_uploader_key # Use the stateful key
-        )
+    elif document_type == "Non-Disclosure Agreement (NDA)":
+        return {
+            "columns": True,
+            "fields": [
+                {"name": "Disclosing Party", "type": "text", "required": True},
+                {"name": "Receiving Party", "type": "text", "required": True},
+                {"name": "Confidential Info", "type": "textarea", "required": True},
+                {"name": "Agreement Duration", "type": "text", "placeholder": "e.g., 2 years"},
+                {"name": "Agreement Date", "type": "date"}
+            ]
+        }
         
-        # Check if a *new* file has been uploaded
-        if uploaded_file is not None:
-            new_file_bytes = uploaded_file.getvalue()
-            if new_file_bytes != st.session_state.uploaded_file_bytes:
-                st.session_state.uploaded_file_bytes = new_file_bytes
-                st.session_state.uploaded_file_type = uploaded_file.type
-                st.session_state.samjhao_explanation = None # Clear old explanation
-                st.session_state.document_context = "No document uploaded." # Clear old context
+    elif document_type == "Affidavit/Self-Declaration":
+        return {
+            "columns": False,
+            "fields": [
+                {"name": "Deponent Name", "type": "text", "required": True},
+                {"name": "Father's Name", "type": "text", "required": True},
+                {"name": "Address", "type": "textarea"},
+                {"name": "Statement", "type": "textarea", "required": True},
+                {"name": "Place", "type": "text"},
+                {"name": "Date", "type": "date"}
+            ]
+        }
+
+    elif document_type == "Simple Will":
+        return {
+            "columns": False,
+            "fields": [
+                {"name": "Testator Name", "type": "text", "required": True},
+                {"name": "Address", "type": "textarea", "required": True},
+                {"name": "Beneficiaries", "type": "textarea", "required": True, "placeholder": "List all beneficiaries and their shares"},
+                {"name": "Executor Name", "type": "text"},
+                {"name": "Date", "type": "date"}
+            ]
+        }
+
+    elif document_type == "Employment Offer Letter":
+        return {
+            "columns": True,
+            "fields": [
+                {"name": "Company Name", "type": "text", "required": True},
+                {"name": "Candidate Name", "type": "text", "required": True},
+                {"name": "Position", "type": "text", "required": True},
+                {"name": "Annual Salary", "type": "number", "required": True},
+                {"name": "Start Date", "type": "date"},
+                {"name": "Department", "type": "text"},
+                {"name": "Reporting Manager", "type": "text"}
+            ]
+        }
         
-        # Display logic: ALWAYS read from session state
-        if st.session_state.uploaded_file_bytes is not None:
-            file_bytes = st.session_state.uploaded_file_bytes
-            file_type = st.session_state.uploaded_file_type
+    else:  # Legal Notice
+        return {
+            "columns": False,
+            "fields": [
+                {"name": "Sender Name", "type": "text", "required": True},
+                {"name": "Recipient Name", "type": "text", "required": True},
+                {"name": "Recipient Address", "type": "textarea", "required": True},
+                {"name": "Issue Description", "type": "textarea", "required": True},
+                {"name": "Demand/Relief Sought", "type": "textarea", "required": True},
+                {"name": "Date", "type": "date"}
+            ]
+        }
+
+def render_form_fields(field_config):
+    """Renders dynamic form fields based on configuration."""
+    inputs = {}
+    
+    if field_config["columns"]:
+        fields = field_config["fields"]
+        for i in range(0, len(fields), 2):
+            if i + 1 < len(fields):
+                c1, c2 = st.columns(2)
+                with c1:
+                    inputs.update(render_single_field(fields[i]))
+                with c2:
+                    inputs.update(render_single_field(fields[i+1]))
+            else:
+                inputs.update(render_single_field(fields[i]))
+    else:
+        for field in field_config["fields"]:
+            inputs.update(render_single_field(field))
             
-            if "image" in file_type:
-                image = Image.open(io.BytesIO(file_bytes)) 
-                st.image(image, caption="Your Uploaded Document", use_column_width=True)
-            elif "pdf" in file_type:
-                st.info("PDF file uploaded. Click 'Samjhao!' to explain.")
-            
-            if st.button("Samjhao!", type="primary", key="samjhao_button"):
+    return inputs
 
-                spinner_text = "Your friend is reading and explaining..."
-                if "image" in file_type:
-                    spinner_text = "Reading your image... (this can take 15-30s)"
-
-                with st.spinner(spinner_text):
-                    try:
-                        model = get_genai_model()
-
-                        prompt_text_multi = f"""
-                        You are an AI assistant. The user has uploaded a document (MIME type: {file_type}).
-                        Perform two tasks:
-                        1. Extract all raw text from the document.
-                        2. Explain the document in simple, everyday {language}.
-
-                        Respond with ONLY a JSON object in this format:
-                        {{
-                          "raw_text": "The raw extracted text...",
-                          "explanation": "Your simple {language} explanation..."
-                        }}
-                        """
-
-                        data_part = {'mime_type': file_type, 'data': file_bytes}
-                        response = model.generate_content([prompt_text_multi, data_part])
-                        clean_response_text = response.text.strip().replace("```json", "").replace("```", "")
-
-                        try:
-                            response_json = json.loads(clean_response_text)
-                            st.session_state.samjhao_explanation = response_json.get("explanation", "Unable to extract explanation.")
-                            st.session_state.document_context = response_json.get("raw_text", "Unable to extract text.")
-                        except json.JSONDecodeError:
-                            st.error("The AI response was not in the expected format. Please try again.")
-                            st.session_state.samjhao_explanation = None
-                            st.session_state.document_context = "No document uploaded."
-
-                    except Exception as e:
-                        st.error(f"An error occurred: {e}")
-                        st.warning("Please try uploading the document again.")
-
-        # Always display the explanation if it exists in the state
-        if st.session_state.samjhao_explanation:
-            st.subheader(f"Here's what it means in {language}:")
-            st.markdown(st.session_state.samjhao_explanation)
+def render_single_field(field):
+    """Renders a single form field."""
+    label = field["name"] + (" *" if field.get("required") else "")
+    placeholder = field.get("placeholder", "")
+    
+    if field["type"] == "text":
+        value = st.text_input(label, placeholder=placeholder)
+    elif field["type"] == "textarea":
+        value = st.text_area(label, placeholder=placeholder, height=100)
+    elif field["type"] == "number":
+        value = st.number_input(label, min_value=0, step=1)
+    elif field["type"] == "date":
+        value = st.date_input(label, value=datetime.date.today())
+    else:
+        value = st.text_input(label)
         
-        if st.session_state.document_context != "No document uploaded." and st.session_state.samjhao_explanation:
-            st.success("Context Saved! You can now ask questions about this document in the 'Kya Karoon?' tab.")
+    return {field["name"]: value}
 
+def show_document_generator(llm_model):
+    """Main function to display the document generator interface."""
+    inject_custom_css()
+    
+    # Using HTML for header to ensure color consistency
+    st.markdown("<h1 style='text-align: center; color: #FAFAFA;'>Legal Document Generator</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #CCCCCC; font-size: 16px;'>Create professional legal documents compliant with Indian laws</p>", unsafe_allow_html=True)
+    st.markdown("---")
 
-    # --- TAB 2: KYA KAROON? (WHAT TO DO?) ---
-    with tab2:
-        st.header("Ask for a simple action plan")
+    document_type = st.selectbox(
+        "Select Document Type:",
+        (
+            "Rental/Lease Agreement",
+            "Non-Disclosure Agreement (NDA)",
+            "Affidavit/Self-Declaration",
+            "Simple Will",
+            "Employment Offer Letter",
+            "Legal Notice"
+        )
+    )
+
+    field_config = get_document_fields(document_type)
+
+    with st.form("doc_gen_form", clear_on_submit=False):
+        # Force dark text for the form subheader using HTML
+        st.markdown(f"<h3 style='color: #1a1a1a;'>{document_type} Details</h3>", unsafe_allow_html=True)
+        st.caption("Fields marked with * are required")
         
-        # --- NEW: In-tab clear chat button ---
-        col1, col2 = st.columns([3,1])
-        with col1:
-             st.write("Scared? Confused? Ask a question and get a simple 3-step plan **based on real guides.**")
+        inputs = render_form_fields(field_config)
+        
+        st.markdown("---")
+        st.warning("Disclaimer: This is an AI-generated draft. Please review with a qualified lawyer.")
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("Clear Chat ♻️"):
-                st.session_state.messages = []
-                st.rerun()
+            generate_btn = st.form_submit_button("Generate Document", type="primary", use_container_width=True)
 
-        # Display a message if context is loaded
-        if st.session_state.document_context != "No document uploaded.":
-            with st.container():
-                st.info(f"**Context Loaded:** I have your uploaded document in memory. Feel free to ask questions about it!")
-
-        # Display all past messages
-        for i, message in enumerate(st.session_state.messages):
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-                
-                guides_sources = message.get("sources_from_guides")
-                doc_context_used = message.get("source_from_document")
-
-                if (guides_sources and len(guides_sources) > 0) or doc_context_used:
-                    st.subheader("Sources I used:")
-                    
-                    if doc_context_used:
-                        st.warning(f"**From Your Uploaded Document:**\n\n...{st.session_state.document_context[:500]}...")
-                    
-                    if guides_sources:
-                        for doc in guides_sources:
-                            st.info(f"**From {doc.metadata.get('source', 'Unknown Guide')}:**\n\n...{doc.page_content}...")
-                
-                # --- NEW: Feedback Buttons ---
-                if message["role"] == "assistant":
-                    feedback_key = f"feedback_{i}"
-                    c1, c2, _ = st.columns([1, 1, 5])
-                    with c1:
-                        if st.button("👍", key=f"{feedback_key}_up"):
-                            st.toast("Thanks for your feedback!")
-                    with c2:
-                        if st.button("👎", key=f"{feedback_key}_down"):
-                            st.toast("Thanks for your feedback!")
-
-        # Define the chat input box
-        if prompt := st.chat_input(f"Ask your follow-up question in {language}..."):
-
-            st.session_state.messages.append({"role": "user", "content": prompt})
-
-            with st.spinner("Your friend is checking the guides..."):
+    if generate_btn:
+        if validate_inputs(inputs):
+            with st.spinner("Drafting your document..."):
                 try:
-                    chat_history_str = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-5:-1]])
-                    current_doc_context = st.session_state.document_context
-
-                    invoke_payload = {
-                        "question": prompt,
-                        "language": language,
-                        "chat_history": chat_history_str,
-                        "document_context": current_doc_context
-                    }
-
-                    response_dict = rag_chain_with_sources.invoke(invoke_payload)
-                    response = response_dict["answer"]
-                    docs = response_dict["sources"]
-
-                    used_document = False
-                    if not docs and current_doc_context != "No document uploaded.":
-                        doc_context_preview = current_doc_context[:1000] if len(current_doc_context) > 1000 else current_doc_context
-                        if any(word.lower() in response.lower() for word in doc_context_preview.split()[:50]):
-                            used_document = True
-
-                    st.session_state.messages.append({
-                        "role": "assistant",
-                        "content": response,
-                        "sources_from_guides": docs,
-                        "source_from_document": used_document
-                    })
-
-                    st.rerun()
-
+                    details_text = "\n".join([f"{key}: {value}" for key, value in inputs.items() if value])
+                    
+                    prompt = f"""
+                    You are an expert Indian Legal Drafter specializing in {document_type}.
+                    Task: Draft a comprehensive, legally sound '{document_type}' based on Indian Law.
+                    USER DETAILS:
+                    {details_text}
+                    INSTRUCTIONS:
+                    1. Output the document in Clean HTML Format.
+                    2. Use <b> tags for bolding.
+                    3. Use <br><br> for paragraph breaks.
+                    4. Use <h3> tags for section headers.
+                    5. Use proper legal terminology and structure.
+                    6. Do NOT use Markdown. Use ONLY HTML tags.
+                    7. Do NOT include <html> or <body> tags.
+                    """
+                    
+                    response = llm_model.invoke(prompt)
+                    draft_html = response.content.replace("```html", "").replace("```", "").strip()
+                    
+                    st.success("Document generated successfully!")
+                    
+                    # Preview Box
+                    st.markdown("---")
+                    st.markdown('<div class="preview-box">', unsafe_allow_html=True)
+                    st.markdown(f"<h3 style='color: black;'>Document Preview</h3>", unsafe_allow_html=True)
+                    # Render the HTML content inside the white preview box
+                    st.markdown(f"<div style='color: black;'>{draft_html}</div>", unsafe_allow_html=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
+                    
+                    pdf_bytes = create_pdf_bytes(draft_html, document_type)
+                    
+                    st.markdown("---")
+                    col1, col2, col3 = st.columns([1, 2, 1])
+                    with col2:
+                        st.download_button(
+                            label="Download PDF Document",
+                            data=pdf_bytes,
+                            file_name=f"{document_type.replace(' ', '_')}_{datetime.datetime.now().strftime('%Y%m%d')}.pdf",
+                            mime="application/pdf",
+                            use_container_width=True
+                        )
+                    
                 except Exception as e:
-                    st.error(f"An error occurred during RAG processing: {e}")
-                    st.session_state.messages.pop()
-# --- TAB 3: DOCUMENT GENERATOR (NEW) ---
-    # We import the function and run it here. Clean and modular.
-    with tab3:
-        show_document_generator(llm)
-
-# --- DISCLAIMER (At the bottom, full width) ---
-st.divider()
-st.error("""
-**Disclaimer:** I am an AI, not a lawyer. This is not legal advice.
-Please consult a real lawyer or contact your local **NALSA (National Legal Services Authority)** for free legal aid.
-""")
+                    st.error(f"Error generating document: {str(e)}")
+        else:
+            st.error("Please fill in at least the required fields marked with *")

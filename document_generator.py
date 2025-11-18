@@ -15,9 +15,9 @@ def inject_custom_css():
             border: 1px solid #e0e0e0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-
+        
         /* Input field styling */
-        .stTextInput > div > div > input,
+        .stTextInput > div > div > input, 
         .stTextArea > div > div > textarea,
         .stNumberInput > div > div > input {
             border-radius: 8px;
@@ -33,7 +33,7 @@ def inject_custom_css():
             color: #999999;
         }
 
-        .stTextInput > div > div > input:focus,
+        .stTextInput > div > div > input:focus, 
         .stTextArea > div > div > textarea:focus,
         .stNumberInput > div > div > input:focus {
             border-color: #4CAF50;
@@ -47,7 +47,7 @@ def inject_custom_css():
             font-weight: 600;
             transition: all 0.3s ease;
         }
-
+        
         .stButton > button:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -75,7 +75,7 @@ def inject_custom_css():
             transition: all 0.3s ease;
             width: 100%;
         }
-
+        
         .stDownloadButton > button:hover {
             background-color: #45a049;
             transform: translateY(-2px);
@@ -92,22 +92,22 @@ def inject_custom_css():
             border-radius: 8px;
             border-left: 4px solid #ff9800;
         }
-
+        
         /* Header styling */
         h1, h2, h3 {
             color: #1a1a1a;
         }
-
+        
         /* Label and caption styling */
         label {
             color: #1a1a1a !important;
             font-weight: 500;
         }
-
+        
         .stCaption {
             color: #2c3e50 !important;
         }
-
+        
         /* Form labels */
         .stForm label {
             color: #1a1a1a !important;
@@ -124,7 +124,7 @@ def inject_custom_css():
             text-align: center;
             font-weight: 500;
         }
-
+        
         /* Info box */
         .info-box {
             background-color: #e7f3ff;
@@ -140,7 +140,7 @@ def inject_custom_css():
 class PDF(FPDF, HTMLMixin):
     def header(self):
         self.set_font('Arial', 'B', 11)
-        self.set_text_color(60, 60, 60)
+        self.set_text_color(60, 60, 60) # Grey color for header
         self.cell(0, 10, 'Nyay-Saathi Legal Document', 0, 1, 'R')
         self.set_draw_color(200, 200, 200)
         self.line(10, 18, 200, 18)
@@ -155,18 +155,19 @@ class PDF(FPDF, HTMLMixin):
 def clean_text_for_pdf(text):
     """
     Replaces incompatible characters for standard PDF fonts.
-    FPDF doesn't support Unicode symbols like rupee or smart quotes.
+    FPDF (standard) doesn't support Unicode symbols like ₹ or smart quotes.
     """
     replacements = {
         "₹": "Rs. ",
-        """: '"', """: '"', "'": "'", "'": "'",
-        "–": "-", "—": "-",
+        "“": '"', "”": '"', "‘": "'", "’": "'", # Smart quotes
+        "–": "-", "—": "-", # Dashes
         "…": "...",
         "•": "*"
     }
     for old, new in replacements.items():
         text = text.replace(old, new)
-
+    
+    # Encode to Latin-1 to catch any other errors, ignoring unprintable chars
     return text.encode('latin-1', 'ignore').decode('latin-1')
 
 def create_pdf_bytes(doc_html, doc_type):
@@ -174,9 +175,11 @@ def create_pdf_bytes(doc_html, doc_type):
     pdf = PDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=20)
-
+    
+    # 1. Sanitize the text to prevent crashes
     safe_html = clean_text_for_pdf(doc_html)
 
+    # 2. Wrap in basic styling for the PDF engine
     styled_html = f"""
     <font face="Arial" size="11">
     <h1 align="center"><b>{doc_type.upper()}</b></h1>
@@ -184,14 +187,17 @@ def create_pdf_bytes(doc_html, doc_type):
     {safe_html}
     </font>
     """
-
+    
     try:
+        # 3. Write HTML
         pdf.write_html(styled_html)
     except Exception as e:
-        pdf = PDF()
+        # Fallback: If HTML structure fails, write plain text so user gets SOMETHING
+        pdf = PDF() # Reset
         pdf.add_page()
         pdf.set_font("Arial", size=11)
         plain_text = safe_html.replace("<br>", "\n").replace("<b>", "").replace("</b>", "")
+        # Remove other HTML tags roughly
         plain_text = re.sub('<.*?>', '', plain_text)
         pdf.multi_cell(0, 6, f"Error rendering format.\n\nPlain text version:\n\n{plain_text}")
 
@@ -217,7 +223,7 @@ def get_document_fields(document_type):
                 {"name": "Agreement Date", "type": "date"}
             ]
         }
-
+        
     elif document_type == "Non-Disclosure Agreement (NDA)":
         return {
             "columns": True,
@@ -229,7 +235,7 @@ def get_document_fields(document_type):
                 {"name": "Agreement Date", "type": "date"}
             ]
         }
-
+        
     elif document_type == "Affidavit/Self-Declaration":
         return {
             "columns": False,
@@ -268,7 +274,7 @@ def get_document_fields(document_type):
                 {"name": "Reporting Manager", "type": "text"}
             ]
         }
-
+        
     else:  # Legal Notice
         return {
             "columns": False,
@@ -285,29 +291,31 @@ def get_document_fields(document_type):
 def render_form_fields(field_config):
     """Renders dynamic form fields based on configuration."""
     inputs = {}
-
+    
     if field_config["columns"]:
         fields = field_config["fields"]
+        # Group fields into pairs for 2-column layout
         for i in range(0, len(fields), 2):
             if i + 1 < len(fields):
                 c1, c2 = st.columns(2)
                 with c1:
                     inputs.update(render_single_field(fields[i]))
                 with c2:
-                    inputs.update(render_single_field(fields[i + 1]))
+                    inputs.update(render_single_field(fields[i+1]))
             else:
+                # Single field left over
                 inputs.update(render_single_field(fields[i]))
     else:
         for field in field_config["fields"]:
             inputs.update(render_single_field(field))
-
+            
     return inputs
 
 def render_single_field(field):
     """Renders a single form field."""
     label = field["name"] + (" *" if field.get("required") else "")
     placeholder = field.get("placeholder", "")
-
+    
     if field["type"] == "text":
         value = st.text_input(label, placeholder=placeholder)
     elif field["type"] == "textarea":
@@ -318,25 +326,27 @@ def render_single_field(field):
         value = st.date_input(label, value=datetime.date.today())
     else:
         value = st.text_input(label)
-
+        
     return {field["name"]: value}
 
 def show_document_generator(llm_model):
     """Main function to display the document generator interface."""
+    # Inject the custom CSS for this tab
     inject_custom_css()
-
+    
     st.markdown("<h1 style='text-align: center; color: #2c3e50;'>Legal Document Generator</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #7f8c8d; font-size: 16px;'>Create professional legal documents compliant with Indian laws using AI assistance</p>", unsafe_allow_html=True)
     st.markdown("---")
 
     st.markdown('<div class="info-box">Select a document type and fill in the required details. Our AI will generate a legally sound draft based on Indian law.</div>', unsafe_allow_html=True)
 
+    # 1. Document Selection
     document_type = st.selectbox(
         "Select Document Type:",
         (
-            "Rental/Lease Agreement",
-            "Non-Disclosure Agreement (NDA)",
-            "Affidavit/Self-Declaration",
+            "Rental/Lease Agreement", 
+            "Non-Disclosure Agreement (NDA)", 
+            "Affidavit/Self-Declaration", 
             "Simple Will",
             "Employment Offer Letter",
             "Legal Notice"
@@ -344,61 +354,67 @@ def show_document_generator(llm_model):
         help="Choose the type of legal document you want to generate"
     )
 
+    # Get fields for selected type
     field_config = get_document_fields(document_type)
 
+    # 2. Dynamic Form
     with st.form("doc_gen_form", clear_on_submit=False):
         st.subheader(f"{document_type} Details")
         st.caption("Fields marked with * are required")
-
+        
         inputs = render_form_fields(field_config)
-
+        
         st.markdown("---")
         st.warning("Disclaimer: This is an AI-generated draft. Please review with a qualified lawyer before use.")
-
+        
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             generate_btn = st.form_submit_button("Generate Document", type="primary", use_container_width=True)
 
+    # 3. Generation Logic
     if generate_btn:
         if validate_inputs(inputs):
             with st.spinner("Drafting your document..."):
                 try:
                     details_text = "\n".join([f"{key}: {value}" for key, value in inputs.items() if value])
-
+                    
+                    # --- PROMPT FOR HTML OUTPUT ---
                     prompt = f"""
                     You are an expert Indian Legal Drafter specializing in {document_type}.
-
+                    
                     Task: Draft a comprehensive, legally sound '{document_type}' based on Indian Law and legal standards.
-
+                    
                     USER DETAILS:
                     {details_text}
-
+                    
                     INSTRUCTIONS:
-                    1. Output the document in Clean HTML Format only.
+                    1. Output the document in **Clean HTML Format** only.
                     2. Use <b> tags for Party Names, Titles, and important terms.
                     3. Use <br><br> for paragraph breaks.
                     4. Use <h3> tags for section headers (WHEREAS, TERMS, etc.).
-                    5. Include all standard clauses relevant to this document type.
+                    5. Include all standard clauses relevant to this document type (Jurisdiction, Dispute Resolution, etc.).
                     6. Use proper legal terminology and structure.
                     7. Include signature blocks at the end.
-                    8. Do NOT use Markdown. Use ONLY HTML tags.
-                    9. Do NOT include <html> or <body> tags.
+                    8. Do NOT use Markdown (** or ##). Use ONLY HTML tags.
+                    9. Do NOT include <html> or <body> tags, just the content.
                     10. Make it comprehensive and professional.
                     """
-
+                    
                     response = llm_model.invoke(prompt)
                     draft_html = response.content.replace("```html", "").replace("```", "").strip()
-
+                    
                     st.success("Document generated successfully!")
+                    
+                    # Preview
                     st.markdown("---")
-
                     st.markdown('<div class="preview-box">', unsafe_allow_html=True)
                     st.subheader("Document Preview")
                     st.markdown(draft_html, unsafe_allow_html=True)
                     st.markdown('</div>', unsafe_allow_html=True)
-
+                    
+                    # Generate PDF
                     pdf_bytes = create_pdf_bytes(draft_html, document_type)
-
+                    
                     st.markdown("---")
                     col1, col2, col3 = st.columns([1, 2, 1])
                     with col2:
@@ -409,7 +425,7 @@ def show_document_generator(llm_model):
                             mime="application/pdf",
                             use_container_width=True
                         )
-
+                    
                 except Exception as e:
                     st.error(f"Error generating document: {str(e)}")
                     st.info("Please try again or contact support if the issue persists.")

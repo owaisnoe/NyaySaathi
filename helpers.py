@@ -195,5 +195,13 @@ def cached_retrieve(retriever, question: str, k: int = 3):
 # Misc
 # ---------------------------------------------------------------------------
 
-def doc_hash(text: str) -> str:
-    return hashlib.sha256((text or "").encode("utf-8")).hexdigest()
+def doc_hash(text: str | bytes) -> str:
+    """
+    Return a sha256 hex digest for the input.
+    Accepts either str or bytes (safe for file bytes).
+    """
+    if isinstance(text, (bytes, bytearray)):
+        data = bytes(text)
+    else:
+        data = (text or "").encode("utf-8")
+    return hashlib.sha256(data).hexdigest()

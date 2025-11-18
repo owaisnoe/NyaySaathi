@@ -251,7 +251,7 @@ Respond with ONLY a JSON object in this format:
 
                             # Call GenAI once (temperature passed per call)
                             try:
-                                api_resp = retry_call(lambda: genai_model.generate_content([prompt_text_multi, data_part], temperature=0.2), tries=2)
+                                api_resp = genai_model.generate_content([prompt_text_multi, data_part])
                             except Exception as e:
                                 st.error(f"AI call failed: {e}")
                                 st.stop()
@@ -352,7 +352,7 @@ Did the "Answer" come *primarily* from the "Context"?
 Respond with ONLY the word 'YES' or 'NO'.
 """
                         try:
-                            audit_resp = retry_call(lambda: audit_model.generate_content(audit_prompt, temperature=0.0), tries=2)
+                            audit_resp = retry_call(lambda: audit_model.generate_content(audit_prompt))
                             audit_text = audit_resp.text
                             if isinstance(audit_text, (bytes, bytearray)):
                                 audit_text = audit_text.decode("utf-8", errors="replace")

@@ -44,13 +44,20 @@ except Exception:
 # ---------------------------------------------------------------------------
 @st.cache_resource
 def get_cached_genai_model(model_name: str):
-    """
-    Return a cached genai.GenerativeModel instance keyed by (model_name).
-    Do NOT pass temperature here — pass it per API call.
-    """
     if genai is None:
-        raise RuntimeError("google.generativeai (genai) is not available in this environment.")
-    return genai.GenerativeModel(model_name)
+        raise RuntimeError("google.generativeai unavailable.")
+
+    return genai.GenerativeModel(
+        model_name=model_name,
+        generation_config={
+            "temperature": 0.2,
+            "top_p": 1,
+            "top_k": 40,
+            "max_output_tokens": 4096
+        }
+    )
+
+
 
 # ---------------------------------------------------------------------------
 # Retry wrapper

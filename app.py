@@ -1,3 +1,4 @@
+# app.py (complete) - drop-in replacement
 import streamlit as st
 import google.generativeai as genai
 import os
@@ -107,7 +108,7 @@ def get_models_and_db():
 
 retriever, llm = get_models_and_db()
 
-# --- RAG runnable / chain (unchanged logic, using your PromptTemplate) ---
+# --- RAG runnable / chain ---
 rag_prompt = PromptTemplate.from_template(rag_prompt_template)
 
 rag_chain_with_sources = RunnableParallel(
@@ -247,28 +248,34 @@ Perform two tasks:
 Respond with ONLY a JSON object in this format:
 {{ "raw_text": "<raw extracted text>", "explanation": "<simple explanation in {language}>" }}
 """
-                            # Encode file bytes as base64 string for GenAI older SDK compatibility
-                            b64_data = base64.b64encode(file_bytes).decode("utf-8")
-                            data_part = {'mime_type': file_type, 'data': b64_data}
-
+                            # First attempt: send raw bytes (this matches your original behavior)
+                            data_part = {'mime_type': file_type, 'data': file_bytes}
                             genai_model = get_cached_genai_model(MODEL_NAME)
 
-                            # Call GenAI once (older SDK: generation config passed at model init)
+                            api_resp = None
+                            tried_base64 = False
+
+                            # Attempt: try raw bytes; if it fails or returns no readable text, retry once with base64
                             try:
                                 api_resp = retry_call(lambda: genai_model.generate_content([prompt_text_multi, data_part]), tries=2)
-                            except Exception as e:
-                                st.error(f"AI call failed: {e}")
-                                st.stop()
+                            except Exception as e_raw:
+                                # fallback: try with base64 payload (some SDKs/servers expect base64 for file parts)
+                                try:
+                                    tried_base64 = True
+                                    b64_data = base64.b64encode(file_bytes).decode("utf-8")
+                                    data_part_b64 = {'mime_type': file_type, 'data': b64_data}
+                                    api_resp = retry_call(lambda: genai_model.generate_content([prompt_text_multi, data_part_b64]), tries=2)
+                                except Exception as e_b64:
+                                    st.error(f"AI call failed (raw bytes error: {e_raw}; base64 retry error: {e_b64})")
+                                    st.stop()
 
-                            # Robustly extract text from api_resp (works across SDK versions)
+                            # Robustly extract text from api_resp across SDK variants
                             resp_text = ""
-                            # 1) try quick accessor .text
                             try:
                                 resp_text = getattr(api_resp, "text", "") or ""
                             except Exception:
                                 resp_text = ""
 
-                            # 2) try candidates array
                             if not resp_text:
                                 try:
                                     candidates = getattr(api_resp, "candidates", None)
@@ -278,18 +285,15 @@ Respond with ONLY a JSON object in this format:
                                 except Exception:
                                     resp_text = ""
 
-                            # 3) fallback to str()
                             if not resp_text:
                                 try:
                                     resp_text = str(api_resp)
                                 except Exception:
                                     resp_text = ""
 
-                            # Defensive decode if bytes-like
                             if isinstance(resp_text, (bytes, bytearray)):
                                 resp_text = resp_text.decode("utf-8", errors="replace")
 
-                            # If still empty, show raw response for debugging
                             if not resp_text or resp_text.strip() == "":
                                 st.error("AI returned no readable text. Showing raw response for debugging (first 5000 chars):")
                                 st.code(repr(api_resp)[:5000])

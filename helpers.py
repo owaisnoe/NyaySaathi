@@ -1,12 +1,11 @@
+# helpers.py
 """
-helpers.py - Nyay-Saathi (focused helpers)
-
-- get_cached_genai_model (no temperature at init)
-- retry_call
-- robust JSON parsing helpers
-- trimming/formatting helpers
-- cached_retrieve wrapper
-- doc_hash that accepts bytes or str
+Helpers for Nyay-Saathi.
+- get_cached_genai_model: returns genai.GenerativeModel(model_name)
+- retry_call: simple retry wrapper
+- JSON parsing helpers: robustly extract JSON from noisy LLM output
+- doc_hash: accepts bytes/str
+- format_docs / cached_retrieve: small utilities used by app.py
 """
 
 import re
@@ -34,122 +33,122 @@ try:
 except Exception:
     genai = None
 
-try:
-    from langchain_community.embeddings import HuggingFaceEmbeddings
-except Exception:
-    HuggingFaceEmbeddings = None
-
 # ---------------------------------------------------------------------------
-# GenAI model caching
+# Model factory (no temperature at init; matches older/new SDKs)
 # ---------------------------------------------------------------------------
 @st.cache_resource
 def get_cached_genai_model(model_name: str):
+    """
+    Return a cached genai.GenerativeModel instance keyed by model_name.
+    Do not pass per-call generation args here (some old SDKs expect generation_config at init).
+    """
     if genai is None:
-        raise RuntimeError("google.generativeai unavailable.")
-
-    return genai.GenerativeModel(
-        model_name=model_name,
-        generation_config={
-            "temperature": 0.2,
-            "top_p": 1,
-            "top_k": 40,
-            "max_output_tokens": 4096
-        }
-    )
-
-
+        raise RuntimeError("google.generativeai (genai) is not available.")
+    # Construct model with minimal args — callers will not pass temperature to generate_content
+    try:
+        return genai.GenerativeModel(model_name)
+    except TypeError:
+        # older/newer oddities: try named arg
+        return genai.GenerativeModel(model_name=model_name)
 
 # ---------------------------------------------------------------------------
 # Retry wrapper
 # ---------------------------------------------------------------------------
-def retry_call(func, tries: int = 3, backoff: float = 1.5, allowed_exceptions: Tuple = (Exception,)):
-    """Simple retry wrapper with exponential backoff."""
+def retry_call(func, tries: int = 2, backoff: float = 1.0, allowed_exceptions: Tuple = (Exception,)):
+    """
+    Retry wrapper with exponential-ish backoff.
+    Usage: retry_call(lambda: genai_model.generate_content(...))
+    """
     for attempt in range(tries):
         try:
             return func()
-        except allowed_exceptions as e:
+        except allowed_exceptions:
             if attempt == tries - 1:
                 raise
-            sleep_time = backoff ** attempt
-            time.sleep(sleep_time)
+            time.sleep(backoff * (attempt + 1))
 
 # ---------------------------------------------------------------------------
-# JSON extraction & parsing helpers
+# JSON parsing helpers (robust)
 # ---------------------------------------------------------------------------
+def clean_code_fences(text: str) -> str:
+    """Strip markdown code fences like ```json and trailing fences."""
+    if not text:
+        return ""
+    return re.sub(r"```(?:json)?", "", text).strip()
+
 def extract_json_block(text: str) -> Optional[str]:
-    """Extract the first balanced JSON object from text using a simple stack scan."""
+    """Find first balanced {...} JSON block and return it, else None."""
     if not text:
         return None
-    start_idx = None
+    start = None
     depth = 0
     for i, ch in enumerate(text):
-        if ch == "{" and start_idx is None:
-            start_idx = i
+        if ch == "{" and start is None:
+            start = i
             depth = 1
             continue
-        if start_idx is not None:
+        if start is not None:
             if ch == "{":
                 depth += 1
             elif ch == "}":
                 depth -= 1
                 if depth == 0:
-                    return text[start_idx: i + 1]
+                    return text[start:i+1]
     return None
 
-def clean_code_fences(text: str) -> str:
-    """Remove markdown code fences (like ```json) commonly returned by LLMs."""
-    return re.sub(r"```(?:json)?", "", text or "").strip()
-
 def safe_parse_json(text: str) -> dict:
-    """Attempt to extract and parse JSON from text robustly. Raises ValueError on failure."""
-    if not text:
-        raise ValueError("No text provided to parse JSON from.")
-    text = clean_code_fences(text)
+    """
+    Try to parse JSON from text. Steps:
+      1) try entire text
+      2) find a balanced {...} block and parse that
+      3) try light quotes normalization
+    Raises ValueError with helpful message on failure.
+    """
+    if not text or not text.strip():
+        raise ValueError("No text to parse as JSON.")
+    t = clean_code_fences(text)
+    # attempt direct parse
     try:
-        return json.loads(text)
+        return json.loads(t)
     except Exception:
         pass
-    block = extract_json_block(text)
+    # try block extraction
+    block = extract_json_block(t)
     if block:
         try:
             return json.loads(block)
         except Exception as e:
-            raise ValueError(f"Found JSON-like block but failed to parse: {e}\nBlock:\n{block[:1000]}")
+            raise ValueError(f"Found JSON-like block but failed to parse: {e}\nBlock snippet: {block[:1000]}")
+    # fallback: normalize quotes and try
+    alt = t.strip().replace("''", '"').replace("‘", '"').replace("’", '"')
+    alt = alt.replace("“", '"').replace("”", '"')
     try:
-        alt = text.strip().replace('\"\"', '"').replace("'", '"')
         return json.loads(alt)
     except Exception as e:
-        raise ValueError(f"Unable to parse JSON from text: {e}\nSnippet:\n{(text or '')[:1000]}")
+        raise ValueError(f"Unable to parse JSON: {e}\nSnippet: {t[:1000]}")
 
-def parse_genai_json_response(response_text: str) -> dict:
-    cleaned = clean_code_fences(response_text)
-    return safe_parse_json(cleaned)
+def parse_genai_json_response(text: str) -> dict:
+    return safe_parse_json(text)
 
 # ---------------------------------------------------------------------------
-# Context trimming & formatting
+# Small helpers used by app.py
 # ---------------------------------------------------------------------------
-def trim_to_chars(text: Optional[str], max_chars: int = 4000) -> str:
-    if not text:
-        return ""
-    if len(text) <= max_chars:
-        return text
-    return text[: max_chars - 100] + "\n\n...[truncated]..."
+def doc_hash(text: str | bytes) -> str:
+    if isinstance(text, (bytes, bytearray)):
+        data = bytes(text)
+    else:
+        data = (text or "").encode("utf-8")
+    return hashlib.sha256(data).hexdigest()
 
 def format_docs(docs: List, per_doc_chars: int = 1000) -> str:
     parts = []
     for d in docs:
-        src = getattr(d, "metadata", {})
-        if isinstance(src, dict):
-            src_name = src.get("source") or src.get("title") or "guide"
-        else:
-            src_name = "guide"
+        meta = getattr(d, "metadata", {}) or {}
+        src = meta.get("source") or meta.get("title") or "guide"
         content = (getattr(d, "page_content", "") or "")[:per_doc_chars]
-        parts.append(f"SOURCE: {src_name}\n{content}...")
+        parts.append(f"SOURCE: {src}\n{content}...")
     return "\n\n".join(parts)
 
-# ---------------------------------------------------------------------------
-# Simple retrieval cache (uses st.session_state)
-# ---------------------------------------------------------------------------
 def cached_retrieve(retriever, question: str, k: int = 3):
     if not hasattr(st, "session_state"):
         try:
@@ -166,14 +165,3 @@ def cached_retrieve(retriever, question: str, k: int = 3):
         docs = retriever.retrieve(question)[:k]
     cache[key] = docs
     return docs
-
-# ---------------------------------------------------------------------------
-# Misc
-# ---------------------------------------------------------------------------
-def doc_hash(text: str | bytes) -> str:
-    """Compute sha256 hash from str or bytes (safe for uploaded file bytes)."""
-    if isinstance(text, (bytes, bytearray)):
-        data = bytes(text)
-    else:
-        data = (text or "").encode("utf-8")
-    return hashlib.sha256(data).hexdigest()

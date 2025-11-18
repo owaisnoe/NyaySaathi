@@ -334,7 +334,7 @@ else:
                                 api_resp = retry_call(lambda: genai_model.generate_content([prompt_text_multi, data_part]), tries=2)
                             except Exception as e:
                                 st.error(f"AI call failed: {e}")
-                                continue
+                                st.stop()
 
                             clean_response_text = api_resp.text.strip().replace("```json", "").replace("```", "")
 
@@ -343,7 +343,7 @@ else:
                             except Exception as e:
                                 st.error(f"Failed to parse AI response: {e}")
                                 st.warning("The AI response might be in an invalid format. Please try again.")
-                                continue
+                                st.stop()
 
                             explanation = response_json.get("explanation")
                             raw_text = response_json.get("raw_text")

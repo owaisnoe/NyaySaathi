@@ -232,7 +232,9 @@ else:
     st.divider()
 
     # --- THE TAB-BASED LAYOUT ---
-    tab1, tab2 = st.tabs(["**Samjhao** (Explain this Document)", "**Kya Karoon?** (Ask a Question)"])
+    # --- THE TAB-BASED LAYOUT ---
+# We need to unpack 3 variables for the 3 tabs
+    tab1, tab2, tab3 = st.tabs(["**Samjhao** (Explain)", "**Kya Karoon?** (Ask)", "**Draft Documents** (Create)"])
 
     # --- TAB 1: SAMJHAO (EXPLAIN) ---
     with tab1:

@@ -192,8 +192,8 @@ _________________          _________________
     "Simple Will": {
         "fields": [
             {"id": "testator_name", "label": "Your Name (Testator)"},
-            {"id": "beneficiary_name", "label": "Beneficiary Name (Who gets assets)"},
-            {"id": "executor_name", "label": "Executor Name (Who manages will)"},
+            {"id": "beneficiary_name", "label": "Beneficiary Name"},
+            {"id": "executor_name", "label": "Executor Name"},
             {"id": "assets", "label": "Details of Assets", "type": "textarea"},
             {"id": "place", "label": "Place"}
         ],
@@ -251,7 +251,6 @@ def create_pdf_bytes(doc_text, doc_type):
 def inject_custom_css():
     st.markdown("""
     <style>
-        /* Modern Header Style */
         .doc-header {
             font-family: 'Arial', sans-serif;
             color: #FAFAFA;
@@ -263,8 +262,6 @@ def inject_custom_css():
             color: #B0B0B0;
             margin-bottom: 30px;
         }
-        
-        /* Professional Form Styling */
         .stForm {
             background-color: #ffffff;
             padding: 30px;
@@ -272,13 +269,9 @@ def inject_custom_css():
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             border: 1px solid #e0e0e0;
         }
-        
-        /* Force Black Text inside Form for readability */
         .stForm label, .stForm h1, .stForm h2, .stForm p, .stForm div {
             color: #333333 !important;
         }
-        
-        /* Input Fields */
         .stTextInput > div > div > input, 
         .stTextArea > div > div > textarea,
         .stNumberInput > div > div > input {
@@ -287,13 +280,6 @@ def inject_custom_css():
             border: 1px solid #ced4da;
             border-radius: 8px;
         }
-        .stTextInput > div > div > input:focus,
-        .stTextArea > div > div > textarea:focus {
-            border-color: #00FFD1;
-            box-shadow: 0 0 5px rgba(0, 255, 209, 0.3);
-        }
-
-        /* Preview Paper Style */
         .paper-preview {
             background-color: #ffffff;
             color: #000000;
@@ -314,7 +300,6 @@ def inject_custom_css():
 def show_document_generator():
     inject_custom_css()
     
-    # Header Section
     st.markdown("<h1 class='doc-header'>📝 Document Generator</h1>", unsafe_allow_html=True)
     st.markdown("<p class='doc-subheader'>Create professional legal agreements instantly. Zero wait time.</p>", unsafe_allow_html=True)
 
@@ -331,28 +316,24 @@ def show_document_generator():
         cols = st.columns(2)
         
         for i, field in enumerate(config["fields"]):
-            # Text areas get full width, others get columns
-            is_textarea = field.get("type") == "textarea"
             
-            # Logic to place fields in columns or full width
-            if is_textarea:
-                container = st
+            label = field["label"]
+            key = field["id"]
+            ftype = field.get("type", "text")
+            
+            # --- THIS IS THE FIX FOR THE CRASH ---
+            if ftype == "textarea":
+                # Textareas go full width (outside columns)
+                user_inputs[key] = st.text_area(label, height=100)
             else:
-                container = cols[i % 2]
-            
-            with container:
-                label = field["label"]
-                key = field["id"]
-                ftype = field.get("type", "text")
-                
-                if ftype == "text":
-                    user_inputs[key] = st.text_input(label)
-                elif ftype == "number":
-                    user_inputs[key] = st.number_input(label, min_value=0, step=1000)
-                elif ftype == "date":
-                    user_inputs[key] = st.date_input(label, value=datetime.date.today())
-                elif ftype == "textarea":
-                    user_inputs[key] = st.text_area(label, height=100)
+                # Normal inputs go into columns
+                with cols[i % 2]:
+                    if ftype == "text":
+                        user_inputs[key] = st.text_input(label)
+                    elif ftype == "number":
+                        user_inputs[key] = st.number_input(label, min_value=0, step=1000)
+                    elif ftype == "date":
+                        user_inputs[key] = st.date_input(label, value=datetime.date.today())
 
         st.markdown("---")
         submitted = st.form_submit_button("Generate Draft (Instant)", type="primary")

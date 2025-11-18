@@ -24,6 +24,8 @@ def inject_custom_css():
             border: 1.5px solid #d0d0d0;
             padding: 10px;
             transition: all 0.3s ease;
+                color: #000000;
+
         }
 
         .stTextInput > div > div > input:focus,

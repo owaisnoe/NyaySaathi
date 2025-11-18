@@ -1,16 +1,16 @@
 import streamlit as st
-from fpdf import FPDF
-import datetime
+from fpdf import FPDF, HTMLMixin # Import HTMLMixin for formatting
 
-def create_pdf_bytes(doc_text, doc_type):
-    """Generates a PDF from text and returns the bytes."""
-    class PDF(FPDF):
+def create_pdf_bytes(doc_html, doc_type):
+    """Generates a PDF from HTML text and returns the bytes."""
+    
+    # We inherit from HTMLMixin to enable write_html
+    class PDF(FPDF, HTMLMixin):
         def header(self):
-            self.set_font('Arial', 'B', 14)
-            self.cell(0, 10, f'Nyay-Saathi Draft: {doc_type}', 0, 1, 'C')
-            self.set_font('Arial', 'I', 10)
-            self.cell(0, 10, f'Generated on: {datetime.date.today().strftime("%d %B, %Y")}', 0, 1, 'C')
-            self.ln(10)
+            self.set_font('Arial', 'B', 16)
+            # FIXED: Clean title, no "Nyay-Saathi" prefix
+            self.cell(0, 10, doc_type.upper(), 0, 1, 'C') 
+            self.ln(10) # Add some space after title
 
         def footer(self):
             self.set_y(-15)
@@ -19,15 +19,24 @@ def create_pdf_bytes(doc_text, doc_type):
 
     pdf = PDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=11)
     
-    # Clean the text to prevent encoding errors
-    safe_text = doc_text.encode('latin-1', 'replace').decode('latin-1')
+    # We use write_html to render bolding (<b>) and breaks (<br>)
+    # We wrap the text in a body tag to ensure font consistency
+    html_content = f"""
+    <body style="font-family: Arial; font-size: 11pt; line-height: 1.5;">
+    {doc_html}
+    </body>
+    """
     
-    pdf.multi_cell(0, 6, safe_text)
-    
-    # --- FIXED: Return bytes directly for fpdf2 compatibility ---
-    return bytes(pdf.output()) 
+    # Attempt to write HTML. If symbols fail, we fall back to clean text.
+    try:
+        pdf.write_html(html_content)
+    except Exception as e:
+        # Fallback: If HTML fails (rare), write plain text
+        pdf.set_font("Arial", size=11)
+        pdf.multi_cell(0, 6, doc_html.replace("<b>", "").replace("</b>", "").replace("<br>", "\n"))
+
+    return bytes(pdf.output())
 
 def show_document_generator(llm_model):
     """
@@ -54,95 +63,77 @@ def show_document_generator(llm_model):
     with st.form("doc_gen_form"):
         st.subheader("Enter Agreement Details")
         
-        # --- SPECIFIC FORM FOR RENTAL AGREEMENT ---
         if document_type == "Rental/Lease Agreement":
             col1, col2 = st.columns(2)
             inputs["Landlord Name"] = col1.text_input("Landlord (Owner) Name")
             inputs["Tenant Name"] = col2.text_input("Tenant Name")
-            
             inputs["Property Address"] = st.text_input("Full Property Address")
-            
             c1, c2, c3 = st.columns(3)
             inputs["Monthly Rent"] = c1.number_input("Monthly Rent (₹)", min_value=0, step=500)
             inputs["Security Deposit"] = c2.number_input("Security Deposit (₹)", min_value=0, step=1000)
             inputs["Lease Duration"] = c3.text_input("Duration (e.g., 11 Months)")
             
-            inputs["Lease Start Date"] = st.date_input("Lease Start Date", datetime.date.today())
-
-        # --- SPECIFIC FORM FOR NDA ---
         elif document_type == "Non-Disclosure Agreement (NDA)":
             col1, col2 = st.columns(2)
             inputs["Disclosing Party"] = col1.text_input("Disclosing Party Name")
             inputs["Receiving Party"] = col2.text_input("Receiving Party Name")
-            
-            inputs["Confidential Information Description"] = st.text_area("What information is confidential?", placeholder="e.g., Business plans, trade secrets, customer lists...")
-            inputs["Duration of Confidentiality"] = st.text_input("Duration (e.g., 2 years, Indefinite)")
+            inputs["Confidential Information"] = st.text_area("Description of Confidential Info")
             inputs["Jurisdiction"] = st.text_input("Jurisdiction (City/State)", value="Bangalore, Karnataka")
 
-        # --- SPECIFIC FORM FOR AFFIDAVIT ---
         elif document_type == "Affidavit/Self-Declaration":
-            col1, col2 = st.columns(2)
-            inputs["Deponent Name"] = col1.text_input("Deponent Name (Your Name)")
-            inputs["Father/Husband Name"] = col2.text_input("Father's/Husband's Name")
-            
-            inputs["Age"] = st.number_input("Age", min_value=18, max_value=100)
+            inputs["Deponent Name"] = st.text_input("Deponent Name (Your Name)")
+            inputs["Father/Husband Name"] = st.text_input("Father's/Husband's Name")
+            inputs["Age"] = st.number_input("Age", min_value=18)
             inputs["Address"] = st.text_input("Residential Address")
-            
-            inputs["Statement of Fact"] = st.text_area("What are you declaring?", placeholder="e.g., I declare that my name is spelled correctly as...")
+            inputs["Statement"] = st.text_area("What are you declaring?", height=100)
 
-        # --- SPECIFIC FORM FOR WILL ---
         elif document_type == "Simple Will":
-            inputs["Testator Name"] = st.text_input("Testator Name (Person making the will)")
-            inputs["Executor Name"] = st.text_input("Executor Name (Person managing the will)")
-            inputs["Beneficiaries"] = st.text_area("Who gets what? (Beneficiaries)", placeholder="e.g., My wife receives the house. My son receives the car.")
-            
-        # --- GENERIC FORM FOR OTHERS ---
-        else:
-            inputs["Party A Name"] = st.text_input("First Party Name")
-            inputs["Party B Name"] = st.text_input("Second Party Name")
-            inputs["Key Terms & Details"] = st.text_area("Enter all other details, terms, and conditions:")
+            inputs["Testator Name"] = st.text_input("Testator Name")
+            inputs["Beneficiaries"] = st.text_area("Beneficiaries & Distribution Details")
 
-        # Common Disclaimer
+        else:
+            inputs["Party Names"] = st.text_input("Party Names")
+            inputs["Details"] = st.text_area("Enter Agreement Details")
+
         st.warning("⚠️ Disclaimer: This is an AI-generated draft. It is NOT a substitute for a lawyer. Review carefully.")
         
         generate_btn = st.form_submit_button("Draft Document", type="primary")
 
     # 3. Generation Logic
     if generate_btn:
-        # Validate that at least the first field is filled
         if list(inputs.values())[0]:
             with st.spinner(f"Drafting your {document_type} based on Indian Code..."):
                 try:
-                    # Construct a structured string from the inputs
                     details_text = "\n".join([f"{key}: {value}" for key, value in inputs.items()])
                     
-                    # The Prompt
+                    # --- UPDATED PROMPT FOR HTML OUTPUT ---
                     prompt = f"""
                     You are an expert Indian Legal Drafter.
-                    Task: Draft a legally sound '{document_type}' based on Indian Law (e.g., Indian Contract Act 1872, Transfer of Property Act, etc.).
+                    Task: Draft a legally sound '{document_type}' based on Indian Law.
                     
-                    USE THESE SPECIFIC DETAILS:
+                    USER DETAILS:
                     {details_text}
                     
-                    Instructions:
-                    1. Use formal, legal language appropriate for India.
-                    2. Include standard clauses (Jurisdiction, Dispute Resolution, Indemnity) relevant to this document type.
-                    3. Ensure the layout is clean and professional.
-                    4. Output ONLY the agreement text. No conversational filler.
+                    INSTRUCTIONS:
+                    1. Output the document in **HTML Format** for PDF generation.
+                    2. Use <b> tags for bolding Party Names, key terms, and headers.
+                    3. Use <br> tags for line breaks. Use <br><br> for paragraph breaks.
+                    4. Use <h3> tags for section headers (like "WHEREAS" or "NOW THIS DEED WITNESSETH").
+                    5. Do NOT use Markdown (like ** or ##). Use only HTML.
+                    6. Output ONLY the HTML code inside the <body> content. Do not include ```html``` blocks.
                     """
                     
-                    # Generate Text
                     response = llm_model.invoke(prompt)
-                    draft_text = response.content
+                    # Clean up potential code blocks
+                    draft_html = response.content.replace("```html", "").replace("```", "")
                     
-                    # Show Preview
+                    # Show Preview (We render HTML as markdown for preview, it looks okay)
                     st.subheader("📄 Draft Preview")
-                    st.text_area("Editable Text", value=draft_text, height=400)
+                    st.markdown(draft_html, unsafe_allow_html=True)
                     
                     # Generate PDF
-                    pdf_data = create_pdf_bytes(draft_text, document_type)
+                    pdf_data = create_pdf_bytes(draft_html, document_type)
                     
-                    # Download Button
                     st.download_button(
                         label="⬇️ Download Final PDF",
                         data=pdf_data,

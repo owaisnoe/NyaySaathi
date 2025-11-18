@@ -3,11 +3,9 @@ google-generativeai
 langchain-google-genai
 langchain-core
 langchain-text-splitters
-langchain-community
 faiss-cpu
 sentence-transformers
+langchain-community
 Pillow
-numpy
-pysqlite3-binary
 
 # Forcing a hard reset v2

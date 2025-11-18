@@ -1,56 +1,75 @@
-# app.py (complete) - drop-in replacement
 import streamlit as st
 import google.generativeai as genai
 import os
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnableParallel
+from langchain_core.runnables import RunnablePassthrough, RunnableParallel
 from langchain_core.output_parsers import StrOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
 from operator import itemgetter
-from PIL import Image
-from langchain_core.messages import HumanMessage
+from PIL import Image 
+from langchain_core.messages import HumanMessage 
+import base64
 import json
 import io
-import hashlib
-import time
-import base64
-
-# helpers (ensure helpers.py is in same repo)
-from helpers import (
-    get_cached_genai_model,
-    retry_call,
-    parse_genai_json_response,
-    trim_to_chars,
-    format_docs,
-    cached_retrieve,
-    doc_hash,
-)
 
 # --- CONFIGURATION & PAGE SETUP ---
+# This MUST be the very first Streamlit command
 st.set_page_config(
-    page_title="Nyay-Saathi",
-    page_icon="🤝",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    page_title="Nyay-Saathi", 
+    page_icon="🤝", 
+    layout="wide", 
+    initial_sidebar_state="collapsed" # Collapse sidebar for a cleaner look
 )
 
-# --- CUSTOM CSS (kept short) ---
+# --- CUSTOM CSS ---
 st.markdown("""
 <style>
+/* ... (Your custom CSS is here, hidden for brevity) ... */
 :root {
     --primary-color: #00FFD1;
     --background-color: #08070C;
     --secondary-background-color: #1B1C2A;
     --text-color: #FAFAFA;
 }
-#MainMenu, header, footer { visibility: hidden; }
-.stButton > button { border: 2px solid var(--primary-color); background: transparent; color: var(--primary-color); padding: 12px 24px; border-radius: 8px; font-weight: bold; }
-.stButton > button:hover { background: var(--primary-color); color: var(--background-color); }
-.stTextArea textarea { background-color: var(--secondary-background-color); color: var(--text-color); border-radius: 8px; border: 1px solid var(--primary-color); }
+body { font-family: 'sans serif'; }
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+.stButton > button {
+    border: 2px solid var(--primary-color); background: transparent; color: var(--primary-color);
+    padding: 12px 24px; border-radius: 8px; font-weight: bold; transition: all 0.3s ease-in-out;
+}
+.stButton > button:hover {
+    background: var(--primary-color); color: var(--background-color); box-shadow: 0 0 15px var(--primary-color);
+}
+.stTextArea textarea {
+    background-color: var(--secondary-background-color); color: var(--text-color);
+    border: 1px solid var(--primary-color); border-radius: 8px;
+}
+/* Style the chat messages */
+div[data-testid="chat-message-container"] {
+    background-color: var(--secondary-background-color);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+/* This is the tab styling from before */
+.stTabs [data-baseweb="tab"] {
+    background: transparent; color: var(--text-color); padding: 10px; transition: all 0.3s ease;
+}
+.stTabs [data-baseweb="tab"]:hover { background: var(--secondary-background-color); }
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+    background: var(--secondary-background-color); color: var(--primary-color); border-bottom: 3px solid var(--primary-color);
+}
+/* Center the landing page elements */
+div[data-testid="stVerticalBlock"] {
+    align-items: center;
+}
 </style>
 """, unsafe_allow_html=True)
+
 
 # --- API KEY CONFIGURATION ---
 try:
@@ -61,6 +80,7 @@ except Exception as e:
 
 DB_FAISS_PATH = "vectorstores/db_faiss"
 MODEL_NAME = "gemini-2.5-flash"
+
 
 # --- RAG PROMPT TEMPLATE ---
 rag_prompt_template = """
@@ -92,14 +112,19 @@ Your Simple, Step-by-Step Action Plan (in {language}):
 @st.cache_resource
 def get_models_and_db():
     try:
-        embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2', model_kwargs={'device': 'cpu'})
+        embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2',
+                                           model_kwargs={'device': 'cpu'})
         db = FAISS.load_local(DB_FAISS_PATH, embeddings, allow_dangerous_deserialization=True)
-        # Keep llm as your RAG LLM wrapper (langchain_google_genai Chat wrapper)
-        llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.2)
+        llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.7)
+        
         retriever = db.as_retriever(
             search_type="similarity_score_threshold",
-            search_kwargs={"k": 3, "score_threshold": 0.3}
+            search_kwargs={
+                "k": 3,
+                "score_threshold": 0.3 # Your tuned threshold
+            }
         )
+        
         return retriever, llm
     except Exception as e:
         st.error(f"Error loading models or vector store: {e}")
@@ -108,7 +133,11 @@ def get_models_and_db():
 
 retriever, llm = get_models_and_db()
 
-# --- RAG runnable / chain ---
+# --- NEW HELPER FUNCTION ---
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+
+# --- THE RAG CHAIN ---
 rag_prompt = PromptTemplate.from_template(rag_prompt_template)
 
 rag_chain_with_sources = RunnableParallel(
@@ -136,6 +165,7 @@ rag_chain_with_sources = RunnableParallel(
 }
 
 # --- SESSION STATE INITIALIZATION ---
+# This runs once per session
 if "app_started" not in st.session_state:
     st.session_state.app_started = False
 if "messages" not in st.session_state:
@@ -151,211 +181,168 @@ if "samjhao_explanation" not in st.session_state:
 if "file_uploader_key" not in st.session_state:
     st.session_state.file_uploader_key = 0
 
-# caches
-if "_samjhao_cache" not in st.session_state:
-    st.session_state["_samjhao_cache"] = {}
-if "_rag_cache" not in st.session_state:
-    st.session_state["_rag_cache"] = {}
 
-# --- START NEW SESSION ---
+# --- "START NEW SESSION" BUTTON ---
 def clear_session():
     st.session_state.messages = []
     st.session_state.document_context = "No document uploaded."
     st.session_state.uploaded_file_bytes = None
     st.session_state.uploaded_file_type = None
     st.session_state.samjhao_explanation = None
-    st.session_state.file_uploader_key += 1
+    # This increments the key, forcing the file uploader to reset
+    st.session_state.file_uploader_key += 1 
 
-# --- RAG invoke caching helper ---
-def invoke_rag_cached(payload: dict):
-    q = payload.get("question", "")
-    doc_ctx = payload.get("document_context", "") or ""
-    key_source = q + "::" + doc_hash(doc_ctx)
-    key = hashlib.sha256(key_source.encode("utf-8")).hexdigest()
-    if key in st.session_state["_rag_cache"]:
-        return st.session_state["_rag_cache"][key]
-    resp = rag_chain_with_sources.invoke(payload)
-    st.session_state["_rag_cache"][key] = resp
-    return resp
 
-# --- UI ---
+# --- THE APP UI ---
+
+# --- LANDING PAGE ---
 if not st.session_state.app_started:
     st.title("Welcome to 🤝 Nyay-Saathi")
     st.subheader("Your AI legal friend, built for India.")
+    # You can add a logo here if you have one in your repo
+    # st.image("logo.png", width=200) 
     st.markdown("This tool helps you understand complex legal documents and get clear, simple action plans.")
     st.markdown("---")
+    
     if st.button("Click here to start", type="primary"):
         st.session_state.app_started = True
         st.rerun()
+
+# --- MAIN APP ---
 else:
     st.title("🤝 Nyay-Saathi (Justice Companion)")
     st.markdown("Your legal friend, in your pocket. Built for India.")
+
+    # Place language selector and clear button side-by-side
     col1, col2 = st.columns([3, 1])
     with col1:
-        language = st.selectbox("Choose your language:", ("Simple English", "Hindi (in Roman script)", "Kannada", "Tamil", "Telugu", "Marathi"))
+        language = st.selectbox(
+            "Choose your language:",
+            ("Simple English", "Hindi (in Roman script)", "Kannada", "Tamil", "Telugu", "Marathi")
+        )
     with col2:
-        st.write("")
+        st.write("") 
         st.write("")
         st.button("Start New Session ♻️", on_click=clear_session, type="primary")
 
+
     st.divider()
+
+    # --- THE TAB-BASED LAYOUT ---
     tab1, tab2 = st.tabs(["**Samjhao** (Explain this Document)", "**Kya Karoon?** (Ask a Question)"])
 
-    # --- SAMJHAO ---
+    # --- TAB 1: SAMJHAO (EXPLAIN) ---
     with tab1:
         st.header("Upload a Legal Document to Explain")
         st.write("Take a photo (or upload a PDF) of your legal notice or agreement.")
-        uploaded_file = st.file_uploader("Choose a file...", type=["jpg", "jpeg", "png", "pdf"], key=st.session_state.file_uploader_key)
+        
+        uploaded_file = st.file_uploader(
+            "Choose a file...", 
+            type=["jpg", "jpeg", "png", "pdf"], 
+            key=st.session_state.file_uploader_key # Use the stateful key
+        )
+        
+        # Check if a *new* file has been uploaded
         if uploaded_file is not None:
             new_file_bytes = uploaded_file.getvalue()
             if new_file_bytes != st.session_state.uploaded_file_bytes:
                 st.session_state.uploaded_file_bytes = new_file_bytes
                 st.session_state.uploaded_file_type = uploaded_file.type
-                st.session_state.samjhao_explanation = None
-                st.session_state.document_context = "No document uploaded."
-
+                st.session_state.samjhao_explanation = None # Clear old explanation
+                st.session_state.document_context = "No document uploaded." # Clear old context
+        
+        # Display logic: ALWAYS read from session state
         if st.session_state.uploaded_file_bytes is not None:
             file_bytes = st.session_state.uploaded_file_bytes
             file_type = st.session_state.uploaded_file_type
-
+            
             if "image" in file_type:
-                try:
-                    image = Image.open(io.BytesIO(file_bytes))
-                    st.image(image, caption="Your Uploaded Document", use_column_width=True)
-                except Exception:
-                    st.info("Image preview unavailable.")
+                image = Image.open(io.BytesIO(file_bytes)) 
+                st.image(image, caption="Your Uploaded Document", use_column_width=True)
             elif "pdf" in file_type:
                 st.info("PDF file uploaded. Click 'Samjhao!' to explain.")
-
+            
             if st.button("Samjhao!", type="primary", key="samjhao_button"):
+                
                 spinner_text = "Your friend is reading and explaining..."
                 if "image" in file_type:
                     spinner_text = "Reading your image... (this can take 15-30s)"
+                
                 with st.spinner(spinner_text):
                     try:
-                        fh = doc_hash(file_bytes)
-                        cached = st.session_state["_samjhao_cache"].get(fh)
-                        if cached:
-                            st.session_state.samjhao_explanation = cached.get("explanation")
-                            st.session_state.document_context = cached.get("raw_text")
-                        else:
-                            prompt_text_multi = f"""
-You are an AI assistant. The user has uploaded a document (MIME type: {file_type}).
-Perform two tasks:
-1. Extract all raw text from the document.
-2. Explain the document in simple, everyday {language}.
-
-Respond with ONLY a JSON object in this format:
-{{ "raw_text": "<raw extracted text>", "explanation": "<simple explanation in {language}>" }}
-"""
-                            # First attempt: send raw bytes (this matches your original behavior)
-                            data_part = {'mime_type': file_type, 'data': file_bytes}
-                            genai_model = get_cached_genai_model(MODEL_NAME)
-
-                            api_resp = None
-                            tried_base64 = False
-
-                            # Attempt: try raw bytes; if it fails or returns no readable text, retry once with base64
-                            try:
-                                api_resp = retry_call(lambda: genai_model.generate_content([prompt_text_multi, data_part]), tries=2)
-                            except Exception as e_raw:
-                                # fallback: try with base64 payload (some SDKs/servers expect base64 for file parts)
-                                try:
-                                    tried_base64 = True
-                                    b64_data = base64.b64encode(file_bytes).decode("utf-8")
-                                    data_part_b64 = {'mime_type': file_type, 'data': b64_data}
-                                    api_resp = retry_call(lambda: genai_model.generate_content([prompt_text_multi, data_part_b64]), tries=2)
-                                except Exception as e_b64:
-                                    st.error(f"AI call failed (raw bytes error: {e_raw}; base64 retry error: {e_b64})")
-                                    st.stop()
-
-                            # Robustly extract text from api_resp across SDK variants
-                            resp_text = ""
-                            try:
-                                resp_text = getattr(api_resp, "text", "") or ""
-                            except Exception:
-                                resp_text = ""
-
-                            if not resp_text:
-                                try:
-                                    candidates = getattr(api_resp, "candidates", None)
-                                    if candidates and len(candidates) > 0:
-                                        cand0 = candidates[0]
-                                        resp_text = getattr(cand0, "content", None) or getattr(cand0, "display", None) or getattr(cand0, "text", None) or ""
-                                except Exception:
-                                    resp_text = ""
-
-                            if not resp_text:
-                                try:
-                                    resp_text = str(api_resp)
-                                except Exception:
-                                    resp_text = ""
-
-                            if isinstance(resp_text, (bytes, bytearray)):
-                                resp_text = resp_text.decode("utf-8", errors="replace")
-
-                            if not resp_text or resp_text.strip() == "":
-                                st.error("AI returned no readable text. Showing raw response for debugging (first 5000 chars):")
-                                st.code(repr(api_resp)[:5000])
-                                st.stop()
-
-                            clean_response_text = resp_text.strip().replace("```json", "").replace("```", "")
-
-                            try:
-                                response_json = parse_genai_json_response(clean_response_text)
-                            except Exception as e:
-                                st.error(f"Failed to parse AI response: {e}")
-                                st.code(clean_response_text[:5000])
-                                st.warning("The AI response might be in an invalid format. Please try again.")
-                                st.stop()
-
-                            explanation = response_json.get("explanation")
-                            raw_text = response_json.get("raw_text")
-
-                            st.session_state["_samjhao_cache"][fh] = {"explanation": explanation, "raw_text": raw_text, "timestamp": time.time()}
-                            st.session_state.samjhao_explanation = explanation
-                            st.session_state.document_context = raw_text
+                        model = genai.GenerativeModel(MODEL_NAME)
+                        
+                        prompt_text_multi = f"""
+                        You are an AI assistant. The user has uploaded a document (MIME type: {file_type}).
+                        Perform two tasks:
+                        1. Extract all raw text from the document.
+                        2. Explain the document in simple, everyday {language}.
+                        
+                        Respond with ONLY a JSON object in this format:
+                        {{
+                          "raw_text": "The raw extracted text...",
+                          "explanation": "Your simple {language} explanation..."
+                        }}
+                        """
+                        
+                        data_part = {'mime_type': file_type, 'data': file_bytes}
+                        response = model.generate_content([prompt_text_multi, data_part])
+                        clean_response_text = response.text.strip().replace("```json", "").replace("```", "")
+                        response_json = json.loads(clean_response_text)
+                        
+                        st.session_state.samjhao_explanation = response_json.get("explanation")
+                        st.session_state.document_context = response_json.get("raw_text")
 
                     except Exception as e:
                         st.error(f"An error occurred: {e}")
                         st.warning("The AI response might be in an invalid format. Please try again.")
 
+        # Always display the explanation if it exists in the state
         if st.session_state.samjhao_explanation:
             st.subheader(f"Here's what it means in {language}:")
             st.markdown(st.session_state.samjhao_explanation)
-
+        
         if st.session_state.document_context != "No document uploaded." and st.session_state.samjhao_explanation:
             st.success("Context Saved! You can now ask questions about this document in the 'Kya Karoon?' tab.")
 
-    # --- KYA KAROON? ---
+
+    # --- TAB 2: KYA KAROON? (WHAT TO DO?) ---
     with tab2:
         st.header("Ask for a simple action plan")
-        col1, col2 = st.columns([3, 1])
+        
+        # --- NEW: In-tab clear chat button ---
+        col1, col2 = st.columns([3,1])
         with col1:
-            st.write("Scared? Confused? Ask a question and get a simple 3-step plan **based on real guides.**")
+             st.write("Scared? Confused? Ask a question and get a simple 3-step plan **based on real guides.**")
         with col2:
             if st.button("Clear Chat ♻️"):
                 st.session_state.messages = []
                 st.rerun()
 
+        # Display a message if context is loaded
         if st.session_state.document_context != "No document uploaded.":
             with st.container():
                 st.info(f"**Context Loaded:** I have your uploaded document in memory. Feel free to ask questions about it!")
 
+        # Display all past messages
         for i, message in enumerate(st.session_state.messages):
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
+                
                 guides_sources = message.get("sources_from_guides")
                 doc_context_used = message.get("source_from_document")
 
                 if (guides_sources and len(guides_sources) > 0) or doc_context_used:
                     st.subheader("Sources I used:")
+                    
                     if doc_context_used:
                         st.warning(f"**From Your Uploaded Document:**\n\n...{st.session_state.document_context[:500]}...")
+                    
                     if guides_sources:
                         for doc in guides_sources:
                             st.info(f"**From {doc.metadata.get('source', 'Unknown Guide')}:**\n\n...{doc.page_content}...")
-
+                
+                # --- NEW: Feedback Buttons ---
                 if message["role"] == "assistant":
                     feedback_key = f"feedback_{i}"
                     c1, c2, _ = st.columns([1, 1, 5])
@@ -366,56 +353,62 @@ Respond with ONLY a JSON object in this format:
                         if st.button("👎", key=f"{feedback_key}_down"):
                             st.toast("Thanks for your feedback!")
 
+        # Define the chat input box
         if prompt := st.chat_input(f"Ask your follow-up question in {language}..."):
+            
             st.session_state.messages.append({"role": "user", "content": prompt})
+            
             with st.spinner("Your friend is checking the guides..."):
                 try:
                     chat_history_str = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-4:-1]])
                     current_doc_context = st.session_state.document_context
-                    invoke_payload = {"question": prompt, "language": language, "chat_history": chat_history_str, "document_context": current_doc_context}
-
-                    response_dict = invoke_rag_cached(invoke_payload)
+                    
+                    invoke_payload = {
+                        "question": prompt,
+                        "language": language,
+                        "chat_history": chat_history_str,
+                        "document_context": current_doc_context
+                    }
+                    
+                    response_dict = rag_chain_with_sources.invoke(invoke_payload) 
                     response = response_dict["answer"]
                     docs = response_dict["sources"]
-
+                    
                     used_document = False
-
+                    
+                    # --- NEW: "Source of Truth" Audit ---
                     if not docs and current_doc_context != "No document uploaded.":
-                        audit_model = get_cached_genai_model(MODEL_NAME)
-                        audit_prompt = f"""
-You are an auditor.
-Question: "{prompt}"
-Answer: "{response}"
-Context: "{current_doc_context}"
-
-Did the "Answer" come *primarily* from the "Context"?
-Respond with ONLY the word 'YES' or 'NO'.
-"""
-                        try:
-                            audit_resp = retry_call(lambda: audit_model.generate_content(audit_prompt), tries=2)
-                            audit_text = ""
-                            try:
-                                audit_text = getattr(audit_resp, "text", "") or ""
-                            except Exception:
-                                audit_text = ""
-                            if not audit_text:
-                                candidates = getattr(audit_resp, "candidates", None)
-                                if candidates and len(candidates) > 0:
-                                    cand0 = candidates[0]
-                                    audit_text = getattr(cand0, "content", None) or getattr(cand0, "display", None) or getattr(cand0, "text", None) or ""
-                            if isinstance(audit_text, (bytes, bytearray)):
-                                audit_text = audit_text.decode("utf-8", errors="replace")
-                            if "YES" in audit_text.upper():
+                        # If no guides were found, we *must* audit the response.
+                        with st.spinner("Auditing response source..."):
+                            audit_model = genai.GenerativeModel(MODEL_NAME)
+                            audit_prompt = f"""
+                            You are an auditor.
+                            Question: "{prompt}"
+                            Answer: "{response}"
+                            Context: "{current_doc_context}"
+                            
+                            Did the "Answer" come *primarily* from the "Context"?
+                            Respond with ONLY the word 'YES' or 'NO'.
+                            """
+                            audit_response = audit_model.generate_content(audit_prompt)
+                            
+                            if "YES" in audit_response.text.upper():
                                 used_document = True
-                        except Exception:
-                            used_document = False
+                    # --- END AUDIT ---
 
-                    st.session_state.messages.append({"role": "assistant", "content": response, "sources_from_guides": docs, "source_from_document": used_document})
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": response,
+                        "sources_from_guides": docs,
+                        "source_from_document": used_document
+                    })
+                    
                     st.rerun()
+                
                 except Exception as e:
                     st.error(f"An error occurred during RAG processing: {e}")
 
-# DISCLAIMER
+# --- DISCLAIMER (At the bottom, full width) ---
 st.divider()
 st.error("""
 **Disclaimer:** I am an AI, not a lawyer. This is not legal advice.

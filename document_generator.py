@@ -127,7 +127,7 @@ def inject_custom_css():
         
         /* Info box */
         .info-box {
-            background-color: #e7f3ff;
+            background-color: #004285;
             border-left: 4px solid #2196F3;
             padding: 15px;
             border-radius: 5px;

@@ -20,21 +20,25 @@ def inject_custom_css():
         .stTextInput > div > div > input,
         .stTextArea > div > div > textarea,
         .stNumberInput > div > div > input {
-        border-radius: 8px;
-        border: 1.5px solid #333333;
-        padding: 10px;
-        color: #000000;
-        background-color: #ffffff;
-        transition: all 0.3s ease;
-    }   
+            border-radius: 8px;
+            border: 1.5px solid #cccccc;
+            padding: 10px;
+            color: #000000;
+            background-color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .stTextInput > div > div > input::placeholder,
+        .stTextArea > div > div > textarea::placeholder {
+            color: #999999;
+        }
 
         .stTextInput > div > div > input:focus,
         .stTextArea > div > div > textarea:focus,
         .stNumberInput > div > div > input:focus {
-        border-color: #2196F3;
-        box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
-    }
-
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+        }
 
         /* Button styling */
         .stButton > button {
@@ -91,7 +95,22 @@ def inject_custom_css():
 
         /* Header styling */
         h1, h2, h3 {
-            color: #2c3e50;
+            color: #1a1a1a;
+        }
+
+        /* Label and caption styling */
+        label {
+            color: #1a1a1a !important;
+            font-weight: 500;
+        }
+
+        .stCaption {
+            color: #2c3e50 !important;
+        }
+
+        /* Form labels */
+        .stForm label {
+            color: #1a1a1a !important;
         }
 
         /* Success message */

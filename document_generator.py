@@ -89,7 +89,7 @@ def inject_custom_css():
 
         /* Warning box enhancement */
         .stAlert {
-            background-color: #cab516;
+            background-color: #00FFD1;
             color: black;
             border-radius: 8px;
             border-left: 4px solid #ff9800;

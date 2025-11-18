@@ -11,6 +11,7 @@ from operator import itemgetter
 from PIL import Image
 import json
 import io
+from document_generator import show_document_generator
 
 # --- CONFIGURATION & PAGE SETUP ---
 # This MUST be the very first Streamlit command
@@ -399,6 +400,10 @@ else:
                 except Exception as e:
                     st.error(f"An error occurred during RAG processing: {e}")
                     st.session_state.messages.pop()
+# --- TAB 3: DOCUMENT GENERATOR (NEW) ---
+    # We import the function and run it here. Clean and modular.
+    with tab3:
+        show_document_generator(llm)
 
 # --- DISCLAIMER (At the bottom, full width) ---
 st.divider()

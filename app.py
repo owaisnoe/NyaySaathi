@@ -13,6 +13,19 @@ from langchain_core.messages import HumanMessage
 import base64
 import json
 import io
+import hashlib
+import time
+
+# Import helpers (make sure helpers.py is in the same repo)
+from helpers import (
+    get_cached_genai_model,
+    retry_call,
+    parse_genai_json_response,
+    trim_to_chars,
+    format_docs,
+    cached_retrieve,
+    doc_hash
+)
 
 # --- CONFIGURATION & PAGE SETUP ---
 # This MUST be the very first Streamlit command
@@ -115,7 +128,7 @@ def get_models_and_db():
         embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2',
                                            model_kwargs={'device': 'cpu'})
         db = FAISS.load_local(DB_FAISS_PATH, embeddings, allow_dangerous_deserialization=True)
-        llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.7)
+        llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.2)
         
         retriever = db.as_retriever(
             search_type="similarity_score_threshold",
@@ -181,6 +194,12 @@ if "samjhao_explanation" not in st.session_state:
 if "file_uploader_key" not in st.session_state:
     st.session_state.file_uploader_key = 0
 
+# caches
+if "_samjhao_cache" not in st.session_state:
+    st.session_state["_samjhao_cache"] = {}
+if "_rag_cache" not in st.session_state:
+    st.session_state["_rag_cache"] = {}
+
 
 # --- "START NEW SESSION" BUTTON ---
 def clear_session():
@@ -191,6 +210,21 @@ def clear_session():
     st.session_state.samjhao_explanation = None
     # This increments the key, forcing the file uploader to reset
     st.session_state.file_uploader_key += 1 
+
+
+# --- RAG invoke caching helper ---
+def invoke_rag_cached(payload: dict):
+    """Cache RAG invoke results per (question + document_context hash) to avoid repeated LLM calls."""
+    q = payload.get("question", "")
+    doc_ctx = payload.get("document_context", "") or ""
+    key_source = q + "::" + doc_hash(doc_ctx)
+    key = hashlib.sha256(key_source.encode("utf-8")).hexdigest()
+    if key in st.session_state["_rag_cache"]:
+        return st.session_state["_rag_cache"][key]
+    # not cached -> invoke and store
+    resp = rag_chain_with_sources.invoke(payload)
+    st.session_state["_rag_cache"][key] = resp
+    return resp
 
 
 # --- THE APP UI ---
@@ -270,28 +304,59 @@ else:
                 
                 with st.spinner(spinner_text):
                     try:
-                        model = genai.GenerativeModel(MODEL_NAME)
-                        
-                        prompt_text_multi = f"""
-                        You are an AI assistant. The user has uploaded a document (MIME type: {file_type}).
-                        Perform two tasks:
-                        1. Extract all raw text from the document.
-                        2. Explain the document in simple, everyday {language}.
-                        
-                        Respond with ONLY a JSON object in this format:
-                        {{
-                          "raw_text": "The raw extracted text...",
-                          "explanation": "Your simple {language} explanation..."
-                        }}
-                        """
-                        
-                        data_part = {'mime_type': file_type, 'data': file_bytes}
-                        response = model.generate_content([prompt_text_multi, data_part])
-                        clean_response_text = response.text.strip().replace("```json", "").replace("```", "")
-                        response_json = json.loads(clean_response_text)
-                        
-                        st.session_state.samjhao_explanation = response_json.get("explanation")
-                        st.session_state.document_context = response_json.get("raw_text")
+                        # Use cached samjhao results keyed by file-hash
+                        fh = doc_hash(file_bytes)
+                        cached = st.session_state["_samjhao_cache"].get(fh)
+                        if cached:
+                            st.session_state.samjhao_explanation = cached.get("explanation")
+                            st.session_state.document_context = cached.get("raw_text")
+                        else:
+                            # Build the prompt (we want a single call to Gemini)
+                            prompt_text_multi = f"""
+                            You are an AI assistant. The user has uploaded a document (MIME type: {file_type}).
+                            Perform two tasks:
+                            1. Extract all raw text from the document.
+                            2. Explain the document in simple, everyday {language}.
+                            
+                            Respond with ONLY a JSON object in this format:
+                            {{
+                              "raw_text": "The raw extracted text...",
+                              "explanation": "Your simple {language} explanation..."
+                            }}
+                            """
+
+                            data_part = {'mime_type': file_type, 'data': file_bytes}
+
+                            genai_model = get_cached_genai_model(MODEL_NAME, temperature=0.2)
+
+                            # single model call (with tiny retry)
+                            try:
+                                api_resp = retry_call(lambda: genai_model.generate_content([prompt_text_multi, data_part]), tries=2)
+                            except Exception as e:
+                                st.error(f"AI call failed: {e}")
+                                continue
+
+                            clean_response_text = api_resp.text.strip().replace("```json", "").replace("```", "")
+
+                            try:
+                                response_json = parse_genai_json_response(clean_response_text)
+                            except Exception as e:
+                                st.error(f"Failed to parse AI response: {e}")
+                                st.warning("The AI response might be in an invalid format. Please try again.")
+                                continue
+
+                            explanation = response_json.get("explanation")
+                            raw_text = response_json.get("raw_text")
+
+                            # store in cache
+                            st.session_state["_samjhao_cache"][fh] = {
+                                "explanation": explanation,
+                                "raw_text": raw_text,
+                                "timestamp": time.time()
+                            }
+
+                            st.session_state.samjhao_explanation = explanation
+                            st.session_state.document_context = raw_text
 
                     except Exception as e:
                         st.error(f"An error occurred: {e}")
@@ -370,30 +435,32 @@ else:
                         "document_context": current_doc_context
                     }
                     
-                    response_dict = rag_chain_with_sources.invoke(invoke_payload) 
+                    # Use cached RAG invoke to avoid repeated LLM calls for same question+doc
+                    response_dict = invoke_rag_cached(invoke_payload)
                     response = response_dict["answer"]
                     docs = response_dict["sources"]
                     
                     used_document = False
                     
-                    # --- NEW: "Source of Truth" Audit ---
+                    # --- NEW: "Source of Truth" Audit (reuse cached genai model for audit) ---
                     if not docs and current_doc_context != "No document uploaded.":
-                        # If no guides were found, we *must* audit the response.
-                        with st.spinner("Auditing response source..."):
-                            audit_model = genai.GenerativeModel(MODEL_NAME)
-                            audit_prompt = f"""
-                            You are an auditor.
-                            Question: "{prompt}"
-                            Answer: "{response}"
-                            Context: "{current_doc_context}"
-                            
-                            Did the "Answer" come *primarily* from the "Context"?
-                            Respond with ONLY the word 'YES' or 'NO'.
-                            """
-                            audit_response = audit_model.generate_content(audit_prompt)
-                            
-                            if "YES" in audit_response.text.upper():
+                        audit_model = get_cached_genai_model(MODEL_NAME, temperature=0.0)
+                        audit_prompt = f"""
+                        You are an auditor.
+                        Question: "{prompt}"
+                        Answer: "{response}"
+                        Context: "{current_doc_context}"
+                        
+                        Did the "Answer" come *primarily* from the "Context"?
+                        Respond with ONLY the word 'YES' or 'NO'.
+                        """
+                        try:
+                            audit_resp = retry_call(lambda: audit_model.generate_content(audit_prompt), tries=2)
+                            if "YES" in audit_resp.text.upper():
                                 used_document = True
+                        except Exception:
+                            # If audit fails, default to not marking as used_document (conservative)
+                            used_document = False
                     # --- END AUDIT ---
 
                     st.session_state.messages.append({

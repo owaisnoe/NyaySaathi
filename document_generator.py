@@ -89,8 +89,6 @@ def inject_custom_css():
 
         /* Warning box enhancement */
         .stAlert {
-            background-color: #00FFD1;
-            color: black;
             border-radius: 8px;
             border-left: 4px solid #ff9800;
         }
@@ -129,7 +127,7 @@ def inject_custom_css():
         
         /* Info box */
         .info-box {
-            background-color: #004285;
+            background-color: #e7f3ff;
             border-left: 4px solid #2196F3;
             padding: 15px;
             border-radius: 5px;

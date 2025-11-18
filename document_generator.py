@@ -3,89 +3,69 @@ from fpdf import FPDF, HTMLMixin
 import datetime
 import re
 
-# --- CUSTOM CSS FOR ENHANCED UI (THEMED) ---
+# --- CUSTOM CSS FOR ENHANCED UI ---
 def inject_custom_css():
     st.markdown("""
     <style>
-        /* --- THEME VARIABLES (Edit these to match your exact brand colors) --- */
-        :root {
-            --primary-color: #8B4513;      /* SaddleBrown: Main buttons, borders */
-            --primary-hover: #6F370F;      /* Darker Brown: Hover states */
-            --accent-color: #DAA520;       /* GoldenRod: Focus rings, highlights */
-            --bg-color: #F9F7F2;           /* Parchment/Off-White: Backgrounds */
-            --text-color: #2C3E50;         /* Dark Slate: Readable text */
-            --success-bg: #E8F5E9;         /* Light Green: Success messages */
-            --info-bg: #FDF5E6;            /* OldLace: Info boxes */
-            --info-border: #DEB887;        /* BurlyWood: Info borders */
-        }
-
         /* Form container styling */
         .stForm {
-            background-color: var(--bg-color);
+            background-color: #f8f9fa;
             padding: 25px;
             border-radius: 10px;
-            border: 1px solid #E0DACC;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         /* Input field styling */
         .stTextInput > div > div > input,
         .stTextArea > div > div > textarea,
-        .stNumberInput > div > div > input,
-        .stSelectbox > div > div > div {
+        .stNumberInput > div > div > input {
             border-radius: 8px;
-            border: 1.5px solid #D3C9BF;
+            border: 1.5px solid #cccccc;
             padding: 10px;
-            color: #333333;
+            color: #000000;
             background-color: #ffffff;
             transition: all 0.3s ease;
+        }
+
+        .stTextInput > div > div > input::placeholder,
+        .stTextArea > div > div > textarea::placeholder {
+            color: #999999;
         }
 
         .stTextInput > div > div > input:focus,
         .stTextArea > div > div > textarea:focus,
         .stNumberInput > div > div > input:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.2); /* Gold glow */
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
         }
 
-        /* Button styling (Primary Action) */
+        /* Button styling */
         .stButton > button {
-            background-color: #f0f2f6; /* Default streamlit gray for secondary */
-            color: #333;
             border-radius: 8px;
             padding: 12px 30px;
             font-weight: 600;
-            border: 1px solid #ccc;
             transition: all 0.3s ease;
         }
-        
-        /* Targeted Submit Button inside Form */
-        div[data-testid="stForm"] button[kind="primary"] {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-        }
 
-        div[data-testid="stForm"] button[kind="primary"]:hover {
-            background-color: var(--primary-hover);
+        .stButton > button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(139, 69, 19, 0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         /* Preview container */
         .preview-box {
             background-color: white;
-            padding: 40px;
-            border-radius: 5px;
-            border: 1px solid #E0DACC;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             margin: 20px 0;
-            font-family: 'Times New Roman', serif; /* Legal feel */
         }
 
         /* Download button special styling */
         .stDownloadButton > button {
-            background-color: var(--primary-color);
+            background-color: #4CAF50;
             color: white;
             border: none;
             padding: 14px 35px;
@@ -97,35 +77,58 @@ def inject_custom_css():
         }
 
         .stDownloadButton > button:hover {
-            background-color: var(--primary-hover);
-            color: white;
+            background-color: #45a049;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        /* Selectbox styling */
+        .stSelectbox > div > div {
+            border-radius: 8px;
         }
 
         /* Warning box enhancement */
         .stAlert {
             border-radius: 8px;
-            border-left: 4px solid var(--accent-color);
-            background-color: #FFF8E1;
+            border-left: 4px solid #ff9800;
         }
 
         /* Header styling */
         h1, h2, h3 {
-            color: var(--primary-color) !important;
-            font-family: 'Georgia', serif;
+            color: #1a1a1a;
         }
 
-        /* Label styling */
-        label, .stCaption {
-            color: var(--text-color) !important;
+        /* Label and caption styling */
+        label {
+            color: #1a1a1a !important;
+            font-weight: 500;
         }
-        
-        /* Info box (The Blue one is now Legal Beige) */
+
+        .stCaption {
+            color: #2c3e50 !important;
+        }
+
+        /* Form labels */
+        .stForm label {
+            color: #1a1a1a !important;
+        }
+
+        /* Success message */
+        .success-banner {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Info box */
         .info-box {
-            background-color: var(--info-bg);
-            border-left: 4px solid var(--info-border);
-            color: #5D4037;
+            background-color: #e7f3ff;
+            border-left: 4px solid #2196F3;
             padding: 15px;
             border-radius: 5px;
             margin: 15px 0;
@@ -137,9 +140,9 @@ def inject_custom_css():
 class PDF(FPDF, HTMLMixin):
     def header(self):
         self.set_font('Arial', 'B', 11)
-        self.set_text_color(139, 69, 19) # SaddleBrown
+        self.set_text_color(60, 60, 60)
         self.cell(0, 10, 'Nyay-Saathi Legal Document', 0, 1, 'R')
-        self.set_draw_color(139, 69, 19)
+        self.set_draw_color(200, 200, 200)
         self.line(10, 18, 200, 18)
         self.ln(8)
 
@@ -156,7 +159,7 @@ def clean_text_for_pdf(text):
     """
     replacements = {
         "₹": "Rs. ",
-        "“": '"', "”": '"', "‘": "'", "’": "'",
+        """: '"', """: '"', "'": "'", "'": "'",
         "–": "-", "—": "-",
         "…": "...",
         "•": "*"
@@ -322,11 +325,10 @@ def show_document_generator(llm_model):
     """Main function to display the document generator interface."""
     inject_custom_css()
 
-    st.markdown("<h1 style='text-align: center; color: #8B4513; font-family: Georgia;'>Legal Document Generator</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #5D4037; font-size: 16px;'>Create professional legal documents compliant with Indian laws using AI assistance</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #2c3e50;'>Legal Document Generator</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #7f8c8d; font-size: 16px;'>Create professional legal documents compliant with Indian laws using AI assistance</p>", unsafe_allow_html=True)
     st.markdown("---")
 
-    # Updated Info Box HTML to match theme
     st.markdown('<div class="info-box">Select a document type and fill in the required details. Our AI will generate a legally sound draft based on Indian law.</div>', unsafe_allow_html=True)
 
     document_type = st.selectbox(

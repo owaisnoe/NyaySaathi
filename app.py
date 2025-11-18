@@ -405,7 +405,7 @@ else:
 # --- TAB 3: DOCUMENT GENERATOR (NEW) ---
     # We import the function and run it here. Clean and modular.
     with tab3:
-        show_document_generator(llm)
+        show_document_generator()
 
 # --- DISCLAIMER (At the bottom, full width) ---
 st.divider()

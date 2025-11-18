@@ -20,20 +20,21 @@ def inject_custom_css():
         .stTextInput > div > div > input,
         .stTextArea > div > div > textarea,
         .stNumberInput > div > div > input {
-            border-radius: 8px;
-            border: 1.5px solid #d0d0d0;
-            padding: 10px;
-            transition: all 0.3s ease;
-                color: #000000;
-
-        }
+        border-radius: 8px;
+        border: 1.5px solid #333333;
+        padding: 10px;
+        color: #000000;
+        background-color: #ffffff;
+        transition: all 0.3s ease;
+    }   
 
         .stTextInput > div > div > input:focus,
         .stTextArea > div > div > textarea:focus,
         .stNumberInput > div > div > input:focus {
-            border-color: #4CAF50;
-            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
-        }
+        border-color: #2196F3;
+        box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+    }
+
 
         /* Button styling */
         .stButton > button {

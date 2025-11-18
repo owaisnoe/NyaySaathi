@@ -4,13 +4,11 @@ import os
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough, RunnableParallel
+from langchain_core.runnables import RunnableParallel
 from langchain_core.output_parsers import StrOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
 from operator import itemgetter
-from PIL import Image 
-from langchain_core.messages import HumanMessage 
-import base64
+from PIL import Image
 import json
 import io
 
@@ -115,7 +113,7 @@ def get_models_and_db():
         embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2',
                                            model_kwargs={'device': 'cpu'})
         db = FAISS.load_local(DB_FAISS_PATH, embeddings, allow_dangerous_deserialization=True)
-        llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.7)
+        llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.3)
         
         retriever = db.as_retriever(
             search_type="similarity_score_threshold",
@@ -132,6 +130,10 @@ def get_models_and_db():
         st.stop()
 
 retriever, llm = get_models_and_db()
+
+@st.cache_resource
+def get_genai_model():
+    return genai.GenerativeModel(MODEL_NAME)
 
 # --- NEW HELPER FUNCTION ---
 def format_docs(docs):
@@ -263,39 +265,44 @@ else:
                 st.info("PDF file uploaded. Click 'Samjhao!' to explain.")
             
             if st.button("Samjhao!", type="primary", key="samjhao_button"):
-                
+
                 spinner_text = "Your friend is reading and explaining..."
                 if "image" in file_type:
                     spinner_text = "Reading your image... (this can take 15-30s)"
-                
+
                 with st.spinner(spinner_text):
                     try:
-                        model = genai.GenerativeModel(MODEL_NAME)
-                        
+                        model = get_genai_model()
+
                         prompt_text_multi = f"""
                         You are an AI assistant. The user has uploaded a document (MIME type: {file_type}).
                         Perform two tasks:
                         1. Extract all raw text from the document.
                         2. Explain the document in simple, everyday {language}.
-                        
+
                         Respond with ONLY a JSON object in this format:
                         {{
                           "raw_text": "The raw extracted text...",
                           "explanation": "Your simple {language} explanation..."
                         }}
                         """
-                        
+
                         data_part = {'mime_type': file_type, 'data': file_bytes}
                         response = model.generate_content([prompt_text_multi, data_part])
                         clean_response_text = response.text.strip().replace("```json", "").replace("```", "")
-                        response_json = json.loads(clean_response_text)
-                        
-                        st.session_state.samjhao_explanation = response_json.get("explanation")
-                        st.session_state.document_context = response_json.get("raw_text")
+
+                        try:
+                            response_json = json.loads(clean_response_text)
+                            st.session_state.samjhao_explanation = response_json.get("explanation", "Unable to extract explanation.")
+                            st.session_state.document_context = response_json.get("raw_text", "Unable to extract text.")
+                        except json.JSONDecodeError:
+                            st.error("The AI response was not in the expected format. Please try again.")
+                            st.session_state.samjhao_explanation = None
+                            st.session_state.document_context = "No document uploaded."
 
                     except Exception as e:
                         st.error(f"An error occurred: {e}")
-                        st.warning("The AI response might be in an invalid format. Please try again.")
+                        st.warning("Please try uploading the document again.")
 
         # Always display the explanation if it exists in the state
         if st.session_state.samjhao_explanation:
@@ -355,46 +362,30 @@ else:
 
         # Define the chat input box
         if prompt := st.chat_input(f"Ask your follow-up question in {language}..."):
-            
+
             st.session_state.messages.append({"role": "user", "content": prompt})
-            
+
             with st.spinner("Your friend is checking the guides..."):
                 try:
-                    chat_history_str = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-4:-1]])
+                    chat_history_str = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-5:-1]])
                     current_doc_context = st.session_state.document_context
-                    
+
                     invoke_payload = {
                         "question": prompt,
                         "language": language,
                         "chat_history": chat_history_str,
                         "document_context": current_doc_context
                     }
-                    
-                    response_dict = rag_chain_with_sources.invoke(invoke_payload) 
+
+                    response_dict = rag_chain_with_sources.invoke(invoke_payload)
                     response = response_dict["answer"]
                     docs = response_dict["sources"]
-                    
+
                     used_document = False
-                    
-                    # --- NEW: "Source of Truth" Audit ---
                     if not docs and current_doc_context != "No document uploaded.":
-                        # If no guides were found, we *must* audit the response.
-                        with st.spinner("Auditing response source..."):
-                            audit_model = genai.GenerativeModel(MODEL_NAME)
-                            audit_prompt = f"""
-                            You are an auditor.
-                            Question: "{prompt}"
-                            Answer: "{response}"
-                            Context: "{current_doc_context}"
-                            
-                            Did the "Answer" come *primarily* from the "Context"?
-                            Respond with ONLY the word 'YES' or 'NO'.
-                            """
-                            audit_response = audit_model.generate_content(audit_prompt)
-                            
-                            if "YES" in audit_response.text.upper():
-                                used_document = True
-                    # --- END AUDIT ---
+                        doc_context_preview = current_doc_context[:1000] if len(current_doc_context) > 1000 else current_doc_context
+                        if any(word.lower() in response.lower() for word in doc_context_preview.split()[:50]):
+                            used_document = True
 
                     st.session_state.messages.append({
                         "role": "assistant",
@@ -402,11 +393,12 @@ else:
                         "sources_from_guides": docs,
                         "source_from_document": used_document
                     })
-                    
+
                     st.rerun()
-                
+
                 except Exception as e:
                     st.error(f"An error occurred during RAG processing: {e}")
+                    st.session_state.messages.pop()
 
 # --- DISCLAIMER (At the bottom, full width) ---
 st.divider()

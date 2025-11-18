@@ -14,6 +14,7 @@ import json
 import io
 import hashlib
 import time
+import base64
 
 # helpers (ensure helpers.py is in same repo)
 from helpers import (
@@ -246,19 +247,54 @@ Perform two tasks:
 Respond with ONLY a JSON object in this format:
 {{ "raw_text": "<raw extracted text>", "explanation": "<simple explanation in {language}>" }}
 """
-                            data_part = {'mime_type': file_type, 'data': file_bytes}
+                            # Encode file bytes as base64 string for GenAI older SDK compatibility
+                            b64_data = base64.b64encode(file_bytes).decode("utf-8")
+                            data_part = {'mime_type': file_type, 'data': b64_data}
+
                             genai_model = get_cached_genai_model(MODEL_NAME)
 
-                            # Call GenAI once (temperature passed per call)
+                            # Call GenAI once (older SDK: generation config passed at model init)
                             try:
-                                api_resp = genai_model.generate_content([prompt_text_multi, data_part])
+                                api_resp = retry_call(lambda: genai_model.generate_content([prompt_text_multi, data_part]), tries=2)
                             except Exception as e:
                                 st.error(f"AI call failed: {e}")
                                 st.stop()
 
-                            resp_text = api_resp.text
+                            # Robustly extract text from api_resp (works across SDK versions)
+                            resp_text = ""
+                            # 1) try quick accessor .text
+                            try:
+                                resp_text = getattr(api_resp, "text", "") or ""
+                            except Exception:
+                                resp_text = ""
+
+                            # 2) try candidates array
+                            if not resp_text:
+                                try:
+                                    candidates = getattr(api_resp, "candidates", None)
+                                    if candidates and len(candidates) > 0:
+                                        cand0 = candidates[0]
+                                        resp_text = getattr(cand0, "content", None) or getattr(cand0, "display", None) or getattr(cand0, "text", None) or ""
+                                except Exception:
+                                    resp_text = ""
+
+                            # 3) fallback to str()
+                            if not resp_text:
+                                try:
+                                    resp_text = str(api_resp)
+                                except Exception:
+                                    resp_text = ""
+
+                            # Defensive decode if bytes-like
                             if isinstance(resp_text, (bytes, bytearray)):
                                 resp_text = resp_text.decode("utf-8", errors="replace")
+
+                            # If still empty, show raw response for debugging
+                            if not resp_text or resp_text.strip() == "":
+                                st.error("AI returned no readable text. Showing raw response for debugging (first 5000 chars):")
+                                st.code(repr(api_resp)[:5000])
+                                st.stop()
+
                             clean_response_text = resp_text.strip().replace("```json", "").replace("```", "")
 
                             try:
@@ -352,8 +388,17 @@ Did the "Answer" come *primarily* from the "Context"?
 Respond with ONLY the word 'YES' or 'NO'.
 """
                         try:
-                            audit_resp = retry_call(lambda: audit_model.generate_content(audit_prompt))
-                            audit_text = audit_resp.text
+                            audit_resp = retry_call(lambda: audit_model.generate_content(audit_prompt), tries=2)
+                            audit_text = ""
+                            try:
+                                audit_text = getattr(audit_resp, "text", "") or ""
+                            except Exception:
+                                audit_text = ""
+                            if not audit_text:
+                                candidates = getattr(audit_resp, "candidates", None)
+                                if candidates and len(candidates) > 0:
+                                    cand0 = candidates[0]
+                                    audit_text = getattr(cand0, "content", None) or getattr(cand0, "display", None) or getattr(cand0, "text", None) or ""
                             if isinstance(audit_text, (bytes, bytearray)):
                                 audit_text = audit_text.decode("utf-8", errors="replace")
                             if "YES" in audit_text.upper():

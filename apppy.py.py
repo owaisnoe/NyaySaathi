@@ -1,35 +1,31 @@
-python
 import streamlit as st
 import google.generativeai as genai
 import os
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough, RunnableParallel
+from langchain_core.runnables import RunnableParallel
 from langchain_core.output_parsers import StrOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
 from operator import itemgetter
-from PIL import Image 
-from langchain_core.messages import HumanMessage 
-import base64
+from PIL import Image
 import json
 import io
-from gtts import gTTS # <-- NEW IMPORT
-
-# --- IMPORT DOCUMENT GENERATOR ---
-from document_generator import show_document_generator 
+from document_generator import show_document_generator
 
 # --- CONFIGURATION & PAGE SETUP ---
+# This MUST be the very first Streamlit command
 st.set_page_config(
     page_title="Nyay-Saathi", 
     page_icon="🤝", 
     layout="wide", 
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed" # Collapse sidebar for a cleaner look
 )
 
 # --- CUSTOM CSS ---
 st.markdown("""
 <style>
+/* ... (Your custom CSS is here, hidden for brevity) ... */
 :root {
     --primary-color: #00FFD1;
     --background-color: #08070C;
@@ -51,12 +47,14 @@ header {visibility: hidden;}
     background-color: var(--secondary-background-color); color: var(--text-color);
     border: 1px solid var(--primary-color); border-radius: 8px;
 }
+/* Style the chat messages */
 div[data-testid="chat-message-container"] {
     background-color: var(--secondary-background-color);
     border-radius: 8px;
     padding: 10px;
     margin-bottom: 10px;
 }
+/* This is the tab styling from before */
 .stTabs [data-baseweb="tab"] {
     background: transparent; color: var(--text-color); padding: 10px; transition: all 0.3s ease;
 }
@@ -64,6 +62,7 @@ div[data-testid="chat-message-container"] {
 .stTabs [data-baseweb="tab"][aria-selected="true"] {
     background: var(--secondary-background-color); color: var(--primary-color); border-bottom: 3px solid var(--primary-color);
 }
+/* Center the landing page elements */
 div[data-testid="stVerticalBlock"] {
     align-items: center;
 }
@@ -79,7 +78,7 @@ except Exception as e:
     st.stop()
 
 DB_FAISS_PATH = "vectorstores/db_faiss"
-MODEL_NAME = "gemini-1.5-flash" 
+MODEL_NAME = "gemini-2.5-flash"
 
 
 # --- RAG PROMPT TEMPLATE ---
@@ -121,7 +120,7 @@ def get_models_and_db():
             search_type="similarity_score_threshold",
             search_kwargs={
                 "k": 3,
-                "score_threshold": 0.3 
+                "score_threshold": 0.3 # Your tuned threshold
             }
         )
         
@@ -137,28 +136,7 @@ retriever, llm = get_models_and_db()
 def get_genai_model():
     return genai.GenerativeModel(MODEL_NAME)
 
-# --- NEW HELPER FUNCTION: Text to Speech ---
-def text_to_speech(text, language):
-    """Converts text to audio bytes using gTTS."""
-    try:
-        lang_code_map = {
-            "Simple English": "en",
-            "Hindi (in Roman script)": "hi", 
-            "Kannada": "kn",
-            "Tamil": "ta",
-            "Telugu": "te",
-            "Marathi": "mr"
-        }
-        lang_code = lang_code_map.get(language, "en")
-        
-        tts = gTTS(text=text, lang=lang_code, slow=False)
-        fp = io.BytesIO()
-        tts.write_to_fp(fp)
-        return fp
-    except Exception as e:
-        st.error(f"Error generating audio: {e}")
-        return None
-
+# --- NEW HELPER FUNCTION ---
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
@@ -190,6 +168,7 @@ rag_chain_with_sources = RunnableParallel(
 }
 
 # --- SESSION STATE INITIALIZATION ---
+# This runs once per session
 if "app_started" not in st.session_state:
     st.session_state.app_started = False
 if "messages" not in st.session_state:
@@ -213,6 +192,7 @@ def clear_session():
     st.session_state.uploaded_file_bytes = None
     st.session_state.uploaded_file_type = None
     st.session_state.samjhao_explanation = None
+    # This increments the key, forcing the file uploader to reset
     st.session_state.file_uploader_key += 1 
 
 
@@ -222,6 +202,8 @@ def clear_session():
 if not st.session_state.app_started:
     st.title("Welcome to 🤝 Nyay-Saathi")
     st.subheader("Your AI legal friend, built for India.")
+    # You can add a logo here if you have one in your repo
+    # st.image("logo.png", width=200) 
     st.markdown("This tool helps you understand complex legal documents and get clear, simple action plans.")
     st.markdown("---")
     
@@ -234,6 +216,7 @@ else:
     st.title("🤝 Nyay-Saathi (Justice Companion)")
     st.markdown("Your legal friend, in your pocket. Built for India.")
 
+    # Place language selector and clear button side-by-side
     col1, col2 = st.columns([3, 1])
     with col1:
         language = st.selectbox(
@@ -249,6 +232,8 @@ else:
     st.divider()
 
     # --- THE TAB-BASED LAYOUT ---
+    # --- THE TAB-BASED LAYOUT ---
+# We need to unpack 3 variables for the 3 tabs
     tab1, tab2, tab3 = st.tabs(["**Samjhao** (Explain)", "**Kya Karoon?** (Ask)", "**Draft Documents** (Create)"])
 
     # --- TAB 1: SAMJHAO (EXPLAIN) ---
@@ -259,17 +244,19 @@ else:
         uploaded_file = st.file_uploader(
             "Choose a file...", 
             type=["jpg", "jpeg", "png", "pdf"], 
-            key=st.session_state.file_uploader_key 
+            key=st.session_state.file_uploader_key # Use the stateful key
         )
         
+        # Check if a *new* file has been uploaded
         if uploaded_file is not None:
             new_file_bytes = uploaded_file.getvalue()
             if new_file_bytes != st.session_state.uploaded_file_bytes:
                 st.session_state.uploaded_file_bytes = new_file_bytes
                 st.session_state.uploaded_file_type = uploaded_file.type
-                st.session_state.samjhao_explanation = None 
-                st.session_state.document_context = "No document uploaded." 
+                st.session_state.samjhao_explanation = None # Clear old explanation
+                st.session_state.document_context = "No document uploaded." # Clear old context
         
+        # Display logic: ALWAYS read from session state
         if st.session_state.uploaded_file_bytes is not None:
             file_bytes = st.session_state.uploaded_file_bytes
             file_type = st.session_state.uploaded_file_type
@@ -281,7 +268,7 @@ else:
                 st.info("PDF file uploaded. Click 'Samjhao!' to explain.")
             
             if st.button("Samjhao!", type="primary", key="samjhao_button"):
-                
+
                 spinner_text = "Your friend is reading and explaining..."
                 if "image" in file_type:
                     spinner_text = "Reading your image... (this can take 15-30s)"
@@ -320,16 +307,10 @@ else:
                         st.error(f"An error occurred: {e}")
                         st.warning("Please try uploading the document again.")
 
+        # Always display the explanation if it exists in the state
         if st.session_state.samjhao_explanation:
             st.subheader(f"Here's what it means in {language}:")
             st.markdown(st.session_state.samjhao_explanation)
-            
-            # --- NEW: Audio Player ---
-            st.markdown("---")
-            st.write("🔊 **Listen to this explanation:**")
-            audio_bytes = text_to_speech(st.session_state.samjhao_explanation, language)
-            if audio_bytes:
-                st.audio(audio_bytes, format="audio/mp3")
         
         if st.session_state.document_context != "No document uploaded." and st.session_state.samjhao_explanation:
             st.success("Context Saved! You can now ask questions about this document in the 'Kya Karoon?' tab.")
@@ -339,6 +320,7 @@ else:
     with tab2:
         st.header("Ask for a simple action plan")
         
+        # --- NEW: In-tab clear chat button ---
         col1, col2 = st.columns([3,1])
         with col1:
              st.write("Scared? Confused? Ask a question and get a simple 3-step plan **based on real guides.**")
@@ -347,10 +329,12 @@ else:
                 st.session_state.messages = []
                 st.rerun()
 
+        # Display a message if context is loaded
         if st.session_state.document_context != "No document uploaded.":
             with st.container():
                 st.info(f"**Context Loaded:** I have your uploaded document in memory. Feel free to ask questions about it!")
 
+        # Display all past messages
         for i, message in enumerate(st.session_state.messages):
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
@@ -368,6 +352,7 @@ else:
                         for doc in guides_sources:
                             st.info(f"**From {doc.metadata.get('source', 'Unknown Guide')}:**\n\n...{doc.page_content}...")
                 
+                # --- NEW: Feedback Buttons ---
                 if message["role"] == "assistant":
                     feedback_key = f"feedback_{i}"
                     c1, c2, _ = st.columns([1, 1, 5])
@@ -378,6 +363,7 @@ else:
                         if st.button("👎", key=f"{feedback_key}_down"):
                             st.toast("Thanks for your feedback!")
 
+        # Define the chat input box
         if prompt := st.chat_input(f"Ask your follow-up question in {language}..."):
 
             st.session_state.messages.append({"role": "user", "content": prompt})
@@ -398,25 +384,11 @@ else:
                     response = response_dict["answer"]
                     docs = response_dict["sources"]
 
-                    # Source of Truth Audit
                     used_document = False
                     if not docs and current_doc_context != "No document uploaded.":
-                        audit_model = get_genai_model()
-                        audit_prompt = f"""
-                        You are an auditor.
-                        Question: "{prompt}"
-                        Answer: "{response}"
-                        Context: "{current_doc_context[:2000]}" 
-                        
-                        Did the "Answer" come primarily from the "Context"?
-                        Respond with ONLY the word 'YES' or 'NO'.
-                        """
-                        try:
-                            audit_response = audit_model.generate_content(audit_prompt)
-                            if "YES" in audit_response.text.upper():
-                                used_document = True
-                        except:
-                            pass 
+                        doc_context_preview = current_doc_context[:1000] if len(current_doc_context) > 1000 else current_doc_context
+                        if any(word.lower() in response.lower() for word in doc_context_preview.split()[:50]):
+                            used_document = True
 
                     st.session_state.messages.append({
                         "role": "assistant",
@@ -429,13 +401,13 @@ else:
 
                 except Exception as e:
                     st.error(f"An error occurred during RAG processing: {e}")
-                    st.session_state.messages.pop() 
-
-    # --- TAB 3: DOCUMENT GENERATOR ---
+                    st.session_state.messages.pop()
+# --- TAB 3: DOCUMENT GENERATOR (NEW) ---
+    # We import the function and run it here. Clean and modular.
     with tab3:
         show_document_generator()
 
-# --- DISCLAIMER ---
+# --- DISCLAIMER (At the bottom, full width) ---
 st.divider()
 st.error("""
 **Disclaimer:** I am an AI, not a lawyer. This is not legal advice.

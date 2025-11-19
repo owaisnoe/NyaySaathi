@@ -13,7 +13,7 @@ from langchain_core.messages import HumanMessage
 import base64
 import json
 import io
-from gtts import gTTS # <-- NEW IMPORT
+from gtts import gTTS 
 
 # --- IMPORT DOCUMENT GENERATOR ---
 from document_generator import show_document_generator 
@@ -78,7 +78,7 @@ except Exception as e:
     st.stop()
 
 DB_FAISS_PATH = "vectorstores/db_faiss"
-MODEL_NAME = "gemini-2.5-pro" 
+MODEL_NAME = "gemini-1.5-pro" 
 
 
 # --- RAG PROMPT TEMPLATE ---
@@ -248,12 +248,14 @@ else:
     st.divider()
 
     # --- THE TAB-BASED LAYOUT ---
-    tab1, tab2, tab3 = st.tabs(["**Samjhao** (Explain)", "**Kya Karoon?** (Ask)", "**Draft Documents** (Create)"])
+    # RENAME: Samjhao -> Ask | Kya Karoon -> What to do
+    tab1, tab2, tab3 = st.tabs(["**Ask** (Explain)", "**What to do** (Plan)", "**Draft Documents** (Create)"])
 
-    # --- TAB 1: SAMJHAO (EXPLAIN) ---
+    # --- TAB 1: ASK (EXPLAIN) ---
     with tab1:
         st.header("Upload a Legal Document to Explain")
         st.write("Take a photo (or upload a PDF) of your legal notice or agreement.")
+        # 
         
         uploaded_file = st.file_uploader(
             "Choose a file...", 
@@ -277,9 +279,10 @@ else:
                 image = Image.open(io.BytesIO(file_bytes)) 
                 st.image(image, caption="Your Uploaded Document", use_column_width=True)
             elif "pdf" in file_type:
-                st.info("PDF file uploaded. Click 'Samjhao!' to explain.")
+                st.info("PDF file uploaded. Click 'Ask!' to explain.")
             
-            if st.button("Samjhao!", type="primary", key="samjhao_button"):
+            # RENAME BUTTON: Samjhao -> Ask
+            if st.button("Ask!", type="primary", key="samjhao_button"):
                 
                 spinner_text = "Your friend is reading and explaining..."
                 if "image" in file_type:
@@ -331,10 +334,11 @@ else:
                 st.audio(audio_bytes, format="audio/mp3")
         
         if st.session_state.document_context != "No document uploaded." and st.session_state.samjhao_explanation:
-            st.success("Context Saved! You can now ask questions about this document in the 'Kya Karoon?' tab.")
+            # RENAME REFERENCE
+            st.success("Context Saved! You can now ask questions about this document in the 'What to do' tab.")
 
 
-    # --- TAB 2: KYA KAROON? (WHAT TO DO?) ---
+    # --- TAB 2: WHAT TO DO (ASK) ---
     with tab2:
         st.header("Ask for a simple action plan")
         

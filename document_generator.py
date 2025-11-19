@@ -2,531 +2,339 @@ import streamlit as st
 from fpdf import FPDF
 import datetime
 
-# --- 1. PROFESSIONAL DOCUMENT TEMPLATES (Indian Legal Standard) ---
+# --- 1. CONFIGURATION & DATA ---
+st.set_page_config(page_title="Nyay-Saathi Drafts", layout="wide", page_icon="⚖️")
+
 DOC_CONFIG = {
-    "Rental/Lease Agreement": {
-        "fields": [
-            {"id": "landlord_name", "label": "Landlord Name (Lessor)"},
-            {"id": "tenant_name", "label": "Tenant Name (Lessee)"},
-            {"id": "property_address", "label": "Complete Property Address", "type": "textarea"},
-            {"id": "rent_amount", "label": "Monthly Rent (Rs.)", "type": "number"},
-            {"id": "deposit_amount", "label": "Security Deposit (Rs.)", "type": "number"},
-            {"id": "lease_duration", "label": "Lease Duration (e.g., 11 months)"},
-            {"id": "start_date", "label": "Lease Start Date", "type": "date"},
-            {"id": "city", "label": "City of Execution"}
-        ],
-        "template": """RESIDENTIAL RENTAL AGREEMENT
+    "Rental Agreement": {
+        "icon": "🏠",
+        "filename": "Rental_Agreement_Draft",
+        "sections": {
+            "Party Details": [
+                {"id": "landlord_name", "label": "Landlord Name (Lessor)", "placeholder": "e.g., Amit Sharma"},
+                {"id": "landlord_addr", "label": "Landlord's Residence Address", "type": "textarea", "placeholder": "Full permanent address of landlord..."},
+                {"id": "tenant_name", "label": "Tenant Name (Lessee)", "placeholder": "e.g., Rahul Verma"},
+                {"id": "tenant_addr", "label": "Tenant's Permanent Address", "type": "textarea", "placeholder": "Permanent address of tenant (not the rental property)..."},
+            ],
+            "Property Details": [
+                {"id": "property_address", "label": "Rental Property Address", "type": "textarea", "placeholder": "Complete address of the property being rented..."},
+                {"id": "city", "label": "City of Execution", "placeholder": "e.g., Bangalore"},
+            ],
+            "Financial Terms": [
+                {"id": "rent_amount", "label": "Monthly Rent (₹)", "type": "number"},
+                {"id": "deposit_amount", "label": "Security Deposit (₹)", "type": "number"},
+                {"id": "payment_day", "label": "Rent Payment Day (e.g., 5th)", "placeholder": "5th"},
+                {"id": "notice_period", "label": "Notice Period (Months)", "type": "number", "placeholder": "1"},
+            ],
+            "Lease Terms": [
+                {"id": "lease_duration", "label": "Duration (Months)", "type": "number", "placeholder": "11"},
+                {"id": "start_date", "label": "Lease Start Date", "type": "date"},
+                {"id": "purpose", "label": "Purpose", "placeholder": "Residential Use Only"},
+            ]
+        },
+        # EXPANDED LEGAL TEMPLATE
+        "template": """<b>RESIDENTIAL RENTAL AGREEMENT</b>
 
-THIS RENTAL AGREEMENT is made and executed at {city} on this {date}, by and between:
+THIS RENTAL AGREEMENT is made and executed at <b>{city}</b> on this <b>{date}</b>, BY AND BETWEEN:
 
-1. {landlord_name}, residing at [Landlord's Address], hereinafter referred to as the "LESSOR" (which expression shall unless repugnant to the context include his/her heirs, executors, administrators, and assigns) of the ONE PART.
+<b>1. {landlord_name}</b>, residing at {landlord_addr} (hereinafter referred to as the "<b>LESSOR</b>", which expression shall include his/her heirs, successors, and assigns) of the ONE PART.
 
 AND
 
-2. {tenant_name}, having permanent address at [Tenant's Permanent Address], hereinafter referred to as the "LESSEE" (which expression shall unless repugnant to the context include his/her heirs, executors, administrators, and assigns) of the OTHER PART.
+<b>2. {tenant_name}</b>, having permanent address at {tenant_addr} (hereinafter referred to as the "<b>LESSEE</b>", which expression shall include his/her heirs, successors, and assigns) of the OTHER PART.
 
-WHEREAS the Lessor is the absolute owner of the property situated at:
+<b>WHEREAS</b> the Lessor is the absolute owner of the property situated at:
 {property_address}
-(hereinafter referred to as the "SCHEDULED PREMISES").
+(hereinafter referred to as the "<b>SCHEDULED PREMISES</b>").
 
-AND WHEREAS the Lessee has requested the Lessor to grant the lease of the said Scheduled Premises for residential purposes, and the Lessor has agreed to the same.
+AND WHEREAS the Lessee has requested the Lessor to grant the lease of the said Scheduled Premises for <b>{purpose}</b>, and the Lessor has agreed to the same on the following terms and conditions:
 
-NOW THIS AGREEMENT WITNESSETH AS FOLLOWS:
+<b>NOW THIS AGREEMENT WITNESSETH AS FOLLOWS:</b>
 
-1. RENT: The Lessee shall pay a monthly rent of Rs. {rent_amount}/- (Rupees in words) on or before the 5th day of every English calendar month.
+<b>1. RENT:</b> The Lessee shall pay a monthly rent of <b>Rs. {rent_amount}/-</b> on or before the <b>{payment_day} day</b> of every English calendar month.
 
-2. DEPOSIT: The Lessee has paid an interest-free refundable security deposit of Rs. {deposit_amount}/- to the Lessor. This amount shall be refunded at the time of vacating the premises, subject to deductions for damages or unpaid dues.
+<b>2. SECURITY DEPOSIT:</b> The Lessee has paid an interest-free refundable security deposit of <b>Rs. {deposit_amount}/-</b> to the Lessor. This amount shall be refunded at the time of vacating the premises, subject to deductions for damages, unpaid rent, or electricity/water dues.
 
-3. DURATION: This lease shall be in force for a period of {lease_duration}, commencing from {start_date}.
+<b>3. DURATION:</b> This lease shall be in force for a period of <b>{lease_duration} months</b>, commencing from <b>{start_date}</b>.
 
-4. MAINTENANCE: The Lessee shall maintain the premises in good condition and shall not cause any structural damages. Minor repairs (tap leakage, fused bulbs) shall be borne by the Lessee.
+<b>4. TERMINATION & NOTICE:</b> Either party may terminate this agreement by giving <b>{notice_period} month(s)</b> prior notice in writing. If the Lessee vacates without notice, the Lessor is entitled to deduct the rent for the notice period from the security deposit.
 
-5. UTILITIES: The Lessee shall pay the electricity and water charges as per the meter reading/bills directly to the concerned authorities.
+<b>5. MAINTENANCE & REPAIRS:</b>
+   a) The Lessee shall keep the premises in good tenantable condition.
+   b) Minor repairs such as fusing of bulbs, leaking taps, etc., shall be borne by the Lessee.
+   c) Major structural repairs shall be the responsibility of the Lessor.
 
-6. TERMINATION: Either party can terminate this agreement by giving one (1) month's prior notice in writing.
+<b>6. UTILITIES:</b> The Lessee shall punctually pay the electricity and water charges as per the meter reading/bills to the concerned authorities.
 
-7. PURPOSE: The premises shall be used strictly for residential purposes only and not for any commercial activity.
+<b>7. SUB-LETTING:</b> The Lessee shall NOT sub-let, assign, or part with the possession of the Scheduled Premises or any part thereof to any third party.
+
+<b>8. INSPECTION:</b> The Lessor or their authorized agent shall have the right to enter the premises at a reasonable time to inspect the condition of the property.
+
+<b>9. ILLEGAL ACTIVITIES:</b> The Lessee shall not use the premises for any illegal or immoral purposes or any purpose other than residential use.
 
 IN WITNESS WHEREOF, the Lessor and the Lessee have set their hands to this Agreement on the day, month, and year first above written.
 
-_________________                              _________________
-LESSOR                                         LESSEE
+__________________          __________________
+<b>LESSOR</b>                      <b>LESSEE</b>
 
-Witnesses:
-1. _________________
-2. _________________"""
+<b>Witnesses:</b>
+1. _____________________
+2. _____________________"""
     },
+    "NDA": {
+        "icon": "🔒",
+        "filename": "Non_Disclosure_Agreement",
+        "sections": {
+            "Parties": [
+                {"id": "disclosing_party", "label": "Disclosing Party Name", "placeholder": "Company/Individual sharing info"},
+                {"id": "receiving_party", "label": "Receiving Party Name", "placeholder": "Company/Individual receiving info"},
+            ],
+            "Scope": [
+                {"id": "confidential_info", "label": "Description of Confidential Info", "type": "textarea", "placeholder": "e.g., Trade secrets, client lists, software code..."},
+                {"id": "purpose", "label": "Purpose of Disclosure", "placeholder": "e.g., Evaluating a potential partnership"},
+                {"id": "duration", "label": "Duration (Years)", "type": "number", "placeholder": "2"},
+                {"id": "jurisdiction", "label": "Jurisdiction (City/State)", "placeholder": "Delhi"},
+            ]
+        },
+        "template": """<b>NON-DISCLOSURE AGREEMENT (NDA)</b>
 
-    "Non-Disclosure Agreement (NDA)": {
-        "fields": [
-            {"id": "disclosing_party", "label": "Disclosing Party Name"},
-            {"id": "receiving_party", "label": "Receiving Party Name"},
-            {"id": "confidential_info", "label": "Description of Confidential Information", "type": "textarea"},
-            {"id": "duration", "label": "Duration of Agreement (e.g., 2 years)"},
-            {"id": "jurisdiction", "label": "Jurisdiction (City/State)"}
-        ],
-        "template": """NON-DISCLOSURE AGREEMENT (NDA)
+This Non-Disclosure Agreement ("Agreement") is entered into on <b>{date}</b> BY AND BETWEEN:
 
-This Non-Disclosure Agreement ("Agreement") is entered into on {date} BY AND BETWEEN:
-
-1. {disclosing_party}, hereinafter referred to as the "DISCLOSING PARTY".
-   AND
-2. {receiving_party}, hereinafter referred to as the "RECEIVING PARTY".
+<b>1. {disclosing_party}</b> (hereinafter referred to as the "<b>DISCLOSING PARTY</b>")
+AND
+<b>2. {receiving_party}</b> (hereinafter referred to as the "<b>RECEIVING PARTY</b>")
 
 (Collectively referred to as the "Parties").
 
-WHEREAS the Disclosing Party possesses certain non-public, confidential, and proprietary information and wishes to share it with the Receiving Party for the purpose of potential business collaboration.
+<b>WHEREAS</b>, in connection with <b>{purpose}</b> (the "Purpose"), the Disclosing Party may disclose certain confidential and proprietary information to the Receiving Party.
 
-NOW, THEREFORE, the Parties agree as follows:
+<b>NOW, THEREFORE, the Parties agree as follows:</b>
 
-1. DEFINITION OF CONFIDENTIAL INFORMATION
-"Confidential Information" refers to any information disclosed by the Disclosing Party, including but not limited to:
+<b>1. DEFINITION OF CONFIDENTIAL INFORMATION</b>
+"Confidential Information" means all non-public information disclosed by the Disclosing Party, whether written, oral, or digital, including but not limited to:
 {confidential_info}
 
-2. OBLIGATIONS OF THE RECEIVING PARTY
+<b>2. OBLIGATIONS OF THE RECEIVING PARTY</b>
 The Receiving Party agrees to:
-   a) Hold the Confidential Information in strict confidence.
-   b) Not disclose such information to any third party without prior written consent.
-   c) Use the information solely for the intended business purpose.
+   a) Hold the Confidential Information in strict confidence and take reasonable precautions to protect it.
+   b) Not disclose such information to any third party without prior written consent from the Disclosing Party.
+   c) Use the information <b>solely</b> for the Purpose stated above.
 
-3. EXCLUSIONS
-Confidential Information does not include info that is public knowledge, already known to the Receiving Party, or independently developed.
+<b>3. EXCLUSIONS</b>
+Confidential Information does not include information that:
+   a) Is or becomes public knowledge through no breach of this Agreement.
+   b) Is already known to the Receiving Party at the time of disclosure.
+   c) Is independently developed by the Receiving Party without use of the Confidential Information.
 
-4. TERM
-This Agreement shall remain in effect for a period of {duration} from the date of execution.
+<b>4. TERM</b>
+The obligations of confidentiality under this Agreement shall survive for a period of <b>{duration} years</b> from the date of disclosure.
 
-5. JURISDICTION
-This Agreement shall be governed by the laws of India, and the courts in {jurisdiction} shall have exclusive jurisdiction.
+<b>5. RETURN OF MATERIALS</b>
+Upon termination of discussions or written request, the Receiving Party shall immediately return or destroy all copies of the Confidential Information.
+
+<b>6. GOVERNING LAW</b>
+This Agreement shall be governed by the laws of India, and the courts in <b>{jurisdiction}</b> shall have exclusive jurisdiction over any disputes.
 
 IN WITNESS WHEREOF, the parties have executed this Agreement.
 
-_________________                              _________________
-(Disclosing Party)                             (Receiving Party)"""
-    },
-
-    "Affidavit/Self-Declaration": {
-        "fields": [
-            {"id": "deponent_name", "label": "Your Name (Deponent)"},
-            {"id": "father_name", "label": "Father's/Husband's Name"},
-            {"id": "age", "label": "Age", "type": "number"},
-            {"id": "address", "label": "Full Residential Address", "type": "textarea"},
-            {"id": "statement", "label": "Statement/Facts to Declare", "type": "textarea"},
-            {"id": "place", "label": "Place of Verification"}
-        ],
-        "template": """AFFIDAVIT / SELF-DECLARATION
-
-I, {deponent_name}, S/o or W/o {father_name}, aged about {age} years, residing at:
-{address}
-
-Do hereby solemnly affirm and declare as follows:
-
-1. That I am a citizen of India and the deponent herein.
-2. That I am well conversant with the facts and circumstances of the matter.
-3. {statement}
-4. That the contents of this affidavit are true and correct to the best of my knowledge and belief, and nothing material has been concealed therefrom.
-
-VERIFICATION
-
-Verified at {place} on this {date}, that the contents of the above affidavit are true and correct. No part of it is false.
-
-_________________
-DEPONENT"""
-    },
-
-    "Employment Offer Letter": {
-        "fields": [
-            {"id": "company_name", "label": "Company Name"},
-            {"id": "candidate_name", "label": "Candidate Name"},
-            {"id": "job_title", "label": "Job Title"},
-            {"id": "salary", "label": "Annual CTC (Rs.)"},
-            {"id": "start_date", "label": "Joining Date", "type": "date"},
-            {"id": "location", "label": "Work Location"}
-        ],
-        "template": """OFFER OF EMPLOYMENT
-
-Date: {date}
-
-To,
-{candidate_name}
-
-Subject: Offer for the post of {job_title}
-
-Dear {candidate_name},
-
-We are pleased to offer you the position of {job_title} at {company_name}, based in {location}. We were impressed by your skills and believe you will be a valuable asset to our team.
-
-TERMS OF OFFER:
-1. Position: You will serve as {job_title} and report to the designated manager.
-2. Compensation: Your Annual Cost to Company (CTC) will be Rs. {salary}, subject to standard statutory deductions (PF, Tax, etc.).
-3. Commencement: Your employment will commence on {start_date}.
-4. Probation: You will be on a probation period of 6 months from the date of joining.
-
-Please sign the duplicate copy of this letter as a token of your acceptance and return it to us.
-
-We look forward to welcoming you to {company_name}.
-
-Sincerely,
-
-HR Manager
-{company_name}
-
-ACCEPTED BY:
-_________________
-(Signature of Candidate)"""
-    },
-
-    "Legal Notice (General)": {
-        "fields": [
-            {"id": "sender_name", "label": "Sender Name (Client)"},
-            {"id": "recipient_name", "label": "Recipient Name"},
-            {"id": "recipient_address", "label": "Recipient Address", "type": "textarea"},
-            {"id": "issue_details", "label": "Details of Grievance/Issue", "type": "textarea"},
-            {"id": "demand", "label": "Demand/Action Required", "type": "textarea"},
-            {"id": "days_to_reply", "label": "Notice Period (e.g., 15 days)"}
-        ],
-        "template": """REGD. POST WITH A/D
-LEGAL NOTICE
-
-Date: {date}
-
-To,
-{recipient_name}
-{recipient_address}
-
-Subject: Legal Notice regarding {issue_details}
-
-Sir/Madam,
-
-Under instructions from and on behalf of my client, {sender_name}, I do hereby serve you with this Legal Notice:
-
-1. That my client states that: {issue_details}
-
-2. That due to your aforesaid acts/omissions, my client has suffered significant mental agony/financial loss.
-
-3. I, therefore, call upon you to {demand} within {days_to_reply} days from the receipt of this notice.
-
-TAKE NOTICE that if you fail to comply with the above demand within the stipulated period, my client shall be constrained to initiate appropriate civil/criminal legal proceedings against you at your sole risk, cost, and consequences.
-
-Yours faithfully,
-
-_________________
-Advocate for {sender_name}"""
-    },
-    
-    "Memorandum of Understanding (MOU)": {
-        "fields": [
-            {"id": "party_a", "label": "First Party Name"},
-            {"id": "party_b", "label": "Second Party Name"},
-            {"id": "purpose", "label": "Purpose of Collaboration", "type": "textarea"},
-            {"id": "roles", "label": "Roles & Responsibilities", "type": "textarea"},
-            {"id": "place", "label": "Place of Execution"}
-        ],
-        "template": """MEMORANDUM OF UNDERSTANDING (MOU)
-
-This MOU is made on {date} at {place}, BY AND BETWEEN:
-
-1. {party_a}, hereinafter referred to as the "FIRST PARTY".
-   AND
-2. {party_b}, hereinafter referred to as the "SECOND PARTY".
-
-PREAMBLE:
-The parties share a common interest and wish to collaborate to achieve mutual goals.
-
-1. PURPOSE:
-The purpose of this MOU is:
-{purpose}
-
-2. ROLES AND RESPONSIBILITIES:
-The parties agree to the following roles:
-{roles}
-
-3. NATURE OF AGREEMENT:
-This MOU is a statement of intent and is not legally binding unless followed by a definitive agreement. Either party may terminate this MOU by giving written notice.
-
-IN WITNESS WHEREOF, the parties have signed this MOU on the date first mentioned above.
-
-_________________          _________________
-(First Party)              (Second Party)"""
-    },
-
-    "Simple Will": {
-        "fields": [
-            {"id": "testator_name", "label": "Your Name (Testator)"},
-            {"id": "beneficiary_name", "label": "Beneficiary Name"},
-            {"id": "executor_name", "label": "Executor Name"},
-            {"id": "assets", "label": "Details of Assets/Property", "type": "textarea"},
-            {"id": "place", "label": "Place"}
-        ],
-        "template": """LAST WILL AND TESTAMENT
-
-I, {testator_name}, currently residing at {place}, being of sound mind and memory, do hereby declare this to be my Last Will and Testament.
-
-1. I hereby revoke all former Wills and Codicils made by me.
-
-2. I appoint {executor_name} as the sole Executor of this Will.
-
-3. I hereby bequeath, devise, and grant my assets/property described below:
-   {assets}
-   
-   TO MY BENEFICIARY: {beneficiary_name}.
-
-4. I declare that this Will is made by me without any pressure or undue influence.
-
-IN WITNESS WHEREOF, I have signed this Will on {date} at {place}.
-
-_________________
-(Testator Signature)
-
-Witnesses:
-1. _________________
-2. _________________"""
-    },
-    
-    "Gift Deed": {
-        "fields": [
-            {"id": "donor_name", "label": "Donor Name (Giver)"},
-            {"id": "donee_name", "label": "Donee Name (Receiver)"},
-            {"id": "relationship", "label": "Relationship (e.g., Son/Daughter)"},
-            {"id": "property_desc", "label": "Description of Gifted Property", "type": "textarea"},
-            {"id": "value", "label": "Approx. Market Value (Rs.)", "type": "number"},
-            {"id": "place", "label": "Place of Execution"}
-        ],
-        "template": """GIFT DEED
-
-This Deed of Gift is executed on {date} at {place}, BETWEEN:
-
-1. {donor_name} (hereinafter called the "DONOR")
-   AND
-2. {donee_name} (hereinafter called the "DONEE")
-
-WHEREAS the Donor is the absolute owner of the property described below.
-AND WHEREAS the Donor bears natural love and affection for the Donee, who is his/her {relationship}.
-
-NOW THIS DEED WITNESSETH:
-
-1. That out of natural love and affection, the Donor hereby transfers, assigns, and gifts the schedule property to the Donee, free from all encumbrances.
-2. The estimated value of the property is Rs. {value}.
-3. The Donee accepts this Gift and has taken possession of the property.
-
-SCHEDULE OF PROPERTY:
-{property_desc}
-
-IN WITNESS WHEREOF, the Donor has executed this Gift Deed.
-
-_________________          _________________
-(Donor)                    (Donee - Accepted)
-
-Witnesses:
-1. _________________
-2. _________________"""
-    },
-    
-    "Power of Attorney (Special)": {
-        "fields": [
-            {"id": "principal_name", "label": "Principal Name (You)"},
-            {"id": "attorney_name", "label": "Attorney/Agent Name"},
-            {"id": "specific_act", "label": "Specific Act Authorized (e.g., to sell car)", "type": "textarea"},
-            {"id": "place", "label": "Place of Execution"}
-        ],
-        "template": """SPECIAL POWER OF ATTORNEY
-
-KNOW ALL MEN BY THESE PRESENTS that I, {principal_name}, residing at {place}, do hereby nominate, constitute, and appoint {attorney_name} as my true and lawful Attorney.
-
-WHEREAS I am unable to personally attend to the matter described below due to personal reasons.
-
-NOW, I authorize my Attorney to do the following specific acts/deeds on my behalf:
-{specific_act}
-
-I hereby agree to ratify and confirm all acts done by my said Attorney under this power.
-
-IN WITNESS WHEREOF, I have signed this deed on {date}.
-
-_________________
-(Principal Signature)
-
-Accepted by:
-_________________
-(Attorney Signature)"""
+__________________          __________________
+<b>Disclosing Party</b>            <b>Receiving Party</b>"""
     }
 }
 
 # --- 2. PDF GENERATOR ---
 class PDF(FPDF):
     def header(self):
-        self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, 'Nyay-Saathi Legal Draft', 0, 1, 'C')
-        self.ln(10)
-    
+        self.set_font('Times', 'B', 10)
+        self.set_text_color(150, 150, 150)
+        self.cell(0, 10, 'Drafted via Nyay-Saathi', 0, 1, 'R')
+        self.ln(5)
+
     def footer(self):
         self.set_y(-15)
         self.set_font('Arial', 'I', 8)
+        self.set_text_color(128)
         self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
 
-def create_pdf_bytes(doc_text, doc_type):
+def generate_pdf(content):
     pdf = PDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=11)
+    pdf.set_auto_page_break(auto=True, margin=20)
+    pdf.set_font("Times", size=12)
     
-    pdf.set_font("Arial", 'B', 14)
-    pdf.cell(0, 10, doc_type.upper(), 0, 1, 'C')
-    pdf.ln(10)
+    # Basic parsing to remove HTML tags for the PDF text
+    clean_text = content.replace("<b>", "").replace("</b>", "")
     
-    pdf.set_font("Arial", size=11)
-    safe_text = doc_text.encode('latin-1', 'replace').decode('latin-1')
-    pdf.multi_cell(0, 7, safe_text)
-    
+    # Using multi_cell for text wrapping
+    pdf.multi_cell(0, 6, clean_text)
     return bytes(pdf.output())
 
-# --- 3. UI HELPERS (CSS) ---
-def inject_custom_css():
-    st.markdown("""
-    <style>
-        /* Main Form Container */
-        .stForm {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            border: 1px solid #e0e0e0;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
-        
-        /* Typography inside form (Force Dark Text) */
-        .stForm h1, .stForm h2, .stForm h3, .stForm p, .stForm label, .stForm div {
-            color: #333333 !important;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        /* Input Fields */
-        .stTextInput > div > div > input, 
-        .stTextArea > div > div > textarea,
-        .stNumberInput > div > div > input,
-        .stDateInput > div > div > input {
-            background-color: #f9f9f9 !important;
-            color: #000000 !important;
-            border: 1px solid #cccccc;
-            border-radius: 8px;
-            padding: 10px;
-        }
-        
-        /* Input Focus Effect */
-        .stTextInput > div > div > input:focus, 
-        .stTextArea > div > div > textarea:focus {
-            border-color: #00FFD1;
-            box-shadow: 0 0 5px rgba(0, 255, 209, 0.4);
-        }
+# --- 3. CSS STYLING ---
+st.markdown("""
+<style>
+    /* General App Styling */
+    .stApp { background-color: #f8f9fa; }
+    
+    /* Sidebar Styling */
+    section[data-testid="stSidebar"] {
+        background-color: #ffffff;
+        border-right: 1px solid #dee2e6;
+    }
+    
+    /* Preview Paper Styling */
+    .a4-paper {
+        background-color: white;
+        width: 100%;
+        min-height: 800px;
+        padding: 50px 60px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        border: 1px solid #e9ecef;
+        margin-bottom: 20px;
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 15px;
+        line-height: 1.7;
+        color: #212529;
+        white-space: pre-wrap;
+    }
 
-        /* Paper Preview Box */
-        .preview-box {
-            background-color: #ffffff;
-            color: #000000; /* Black text */
-            padding: 40px;
-            margin-top: 20px;
-            border: 1px solid #dcdcdc;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-            border-radius: 2px; /* Sharp corners for paper look */
-            font-family: 'Times New Roman', Times, serif; /* Legal Font */
-            font-size: 14px;
-            line-height: 1.6;
-            white-space: pre-wrap; /* Respects newlines */
-        }
+    /* Highlight Styling */
+    .highlight {
+        background-color: #e8f0fe;
+        color: #1a73e8;
+        font-weight: 600;
+        padding: 0 2px;
+        border-bottom: 1px dashed #1a73e8;
+    }
+    
+    /* Section Header in Sidebar */
+    .section-label {
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #6c757d;
+        margin-top: 20px;
+        margin-bottom: 5px;
+        letter-spacing: 0.5px;
+    }
+
+    /* Download Card Styling */
+    .download-card {
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
+    .file-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .file-icon {
+        font-size: 2rem;
+    }
+    .file-details h4 {
+        margin: 0;
+        font-size: 1rem;
+        color: #333;
+    }
+    .file-details p {
+        margin: 0;
+        font-size: 0.8rem;
+        color: #777;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- 4. MAIN APP LOGIC ---
+
+# --- SIDEBAR: INPUTS ---
+with st.sidebar:
+    st.title("📝 Legal Drafter")
+    selected_doc = st.selectbox("Document Type", list(DOC_CONFIG.keys()))
+    config = DOC_CONFIG[selected_doc]
+    
+    st.markdown("---")
+    
+    user_data = {}
+    
+    # Dynamic Form Generation
+    with st.form("drafting_form"):
+        for section, fields in config["sections"].items():
+            st.markdown(f"<div class='section-label'>{section}</div>", unsafe_allow_html=True)
+            
+            for field in fields:
+                ftype = field.get("type", "text")
+                fid = field["id"]
+                flabel = field["label"]
+                fplace = field.get("placeholder", "")
+                
+                if ftype == "textarea":
+                    user_data[fid] = st.text_area(flabel, placeholder=fplace, height=80)
+                elif ftype == "date":
+                    user_data[fid] = st.date_input(flabel, value=datetime.date.today())
+                elif ftype == "number":
+                    user_data[fid] = st.number_input(flabel, min_value=0, step=1)
+                else:
+                    user_data[fid] = st.text_input(flabel, placeholder=fplace)
         
-        /* Header Styling */
-        .doc-header {
-            color: #FAFAFA;
-            text-align: center;
-            font-weight: bold;
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-        .doc-subheader {
-            color: #cccccc;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-    </style>
+        st.markdown("<br>", unsafe_allow_html=True)
+        submitted = st.form_submit_button("Update Preview", type="primary", use_container_width=True)
+
+# --- MAIN AREA: PREVIEW ---
+col1, col2 = st.columns([4, 1])
+with col1:
+    st.subheader(f"{config['icon']} {selected_doc}")
+with col2:
+    st.markdown(f"<div style='text-align:right; color:gray; padding-top:10px;'>{datetime.date.today().strftime('%B %d, %Y')}</div>", unsafe_allow_html=True)
+
+# 1. Prepare Data for Display
+formatted_data = {}
+user_data["date"] = datetime.date.today().strftime("%B %d, %Y")
+
+for key, value in user_data.items():
+    display_value = str(value) if value else f"[{key.replace('_', ' ').upper()}]"
+    formatted_data[key] = f'<span class="highlight">{display_value}</span>'
+
+# 2. Render HTML Preview (Paper Look)
+html_content = config["template"].format(**formatted_data)
+st.markdown(f'<div class="a4-paper">{html_content}</div>', unsafe_allow_html=True)
+
+# 3. Download Section (Professional Card UI)
+st.markdown("---")
+st.subheader("📥 Export Document")
+
+# Prepare Clean Data for PDF
+clean_data = {k: str(v) if v else "____________" for k, v in user_data.items()}
+clean_text = config["template"].replace("<b>", "").replace("</b>", "").format(**clean_data)
+pdf_bytes = generate_pdf(clean_text)
+file_name = f"{config['filename']}.pdf"
+
+# The "Download Card" Layout
+download_col1, download_col2, download_col3 = st.columns([0.1, 3, 1])
+
+with download_col1:
+    st.markdown("<div style='font-size: 2.5rem; padding-top:10px;'>📄</div>", unsafe_allow_html=True)
+
+with download_col2:
+    st.markdown(f"""
+    <div style="padding-top: 10px;">
+        <h4 style="margin:0; color:#333;">{selected_doc} (Ready to Print)</h4>
+        <p style="margin:0; color:#777; font-size:0.9rem;">PDF Format • A4 Size • Standard Legal Font</p>
+    </div>
     """, unsafe_allow_html=True)
 
-# --- 4. MAIN FUNCTION ---
-def show_document_generator():
-    inject_custom_css()
-    
-    st.markdown("<h1 class='doc-header'>📝 Document Generator</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='doc-subheader'>Instant. Professional. Compliant.</p>", unsafe_allow_html=True)
-
-    # Document Selector
-    doc_type = st.selectbox("Select Document Type:", list(DOC_CONFIG.keys()))
-    config = DOC_CONFIG[doc_type]
-    
-    user_inputs = {}
-    
-    # --- FORM START ---
-    with st.form("doc_form"):
-        st.markdown(f"<h3 style='color:#333; border-bottom: 2px solid #eee; padding-bottom: 10px;'>{doc_type} Details</h3>", unsafe_allow_html=True)
-        st.caption("Please fill in the details below.")
-        
-        # Layout Logic: Pairs of fields in columns, Textareas full width
-        current_col = 0
-        cols = st.columns(2)
-        
-        for field in config["fields"]:
-            label = field["label"]
-            key = field["id"]
-            ftype = field.get("type", "text")
-            
-            # If textarea, break out of columns
-            if ftype == "textarea":
-                user_inputs[key] = st.text_area(label, height=100)
-                current_col = 0 # Reset column counter
-            else:
-                # Place in current column
-                with cols[current_col]:
-                    if ftype == "text":
-                        user_inputs[key] = st.text_input(label)
-                    elif ftype == "number":
-                        user_inputs[key] = st.number_input(label, min_value=0, step=1000)
-                    elif ftype == "date":
-                        user_inputs[key] = st.date_input(label, value=datetime.date.today())
-                
-                # Toggle column index (0 -> 1 -> 0)
-                current_col = 1 - current_col
-
-        st.markdown("---")
-        submitted = st.form_submit_button("Generate Draft (Instant)", type="primary")
-    # --- FORM END ---
-
-    if submitted:
-        user_inputs["date"] = datetime.date.today().strftime("%B %d, %Y")
-        
-        # Simple validation
-        empty_fields = [k for k, v in user_inputs.items() if str(v).strip() == ""]
-        
-        if not empty_fields:
-            try:
-                # Fill Template
-                final_text = config["template"].format(**user_inputs)
-                
-                st.success(f"✅ {doc_type} Generated Successfully!")
-                
-                # Preview
-                st.markdown("### 📄 Document Preview")
-                st.markdown(f'<div class="preview-box">{final_text}</div>', unsafe_allow_html=True)
-                
-                # PDF
-                pdf_data = create_pdf_bytes(final_text, doc_type)
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-                col1, col2, col3 = st.columns([1, 2, 1])
-                with col2:
-                    st.download_button(
-                        label="⬇️ Download PDF Document",
-                        data=pdf_data,
-                        file_name=f"{doc_type.replace(' ', '_')}_Draft.pdf",
-                        mime="application/pdf",
-                        type="primary",
-                        use_container_width=True
-                    )
-                
-            except Exception as e:
-                st.error(f"Error filling template: {e}")
-        else:
-            st.error("⚠️ Please fill in all fields to generate the document.")
+with download_col3:
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.download_button(
+        label="Download PDF",
+        data=pdf_bytes,
+        file_name=file_name,
+        mime="application/pdf",
+        type="primary",
+        use_container_width=True
+    )

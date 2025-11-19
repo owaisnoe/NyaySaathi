@@ -424,59 +424,46 @@ def inject_custom_css():
         }
 
         /* ===== SELECTBOX STYLING ===== */
-        .stSelectbox {
-                background: #15EDED;
-            margin-bottom: 2rem;
-        }
-
         .stSelectbox > div > div {
-            background: linear-gradient(135deg, #15EDED 0%, #f8fafc 100%) ;
+            background: linear-gradient(135deg, #15EDED 0%, #f8fafc 100%) !important;
             border: 2px solid #e2e8f0 !important;
             border-radius: 12px !important;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08) !important;
-            font-family: 'Inter', sans-serif !important;
-            font-weight: 600 !important;
-            color: #1e293b;
-            padding: 0.75rem 1rem !important;
         }
 
+        /* --- THE FIX: Force text color to dark inside the selection box --- */
+        .stSelectbox div[data-baseweb="select"] > div:first-child {
+            color: #1e293b !important; /* Dark Text */
+            -webkit-text-fill-color: #1e293b !important;
+        }
+
+        /* Ensure the text span specifically is also dark */
+        .stSelectbox div[data-baseweb="select"] span {
+            color: #1e293b !important;
+        }
+
+        /* Hover effects */
         .stSelectbox > div > div:hover {
             border-color: #0ea5e9 !important;
             box-shadow: 0 6px 25px rgba(14, 165, 233, 0.15) !important;
             transform: translateY(-2px) !important;
         }
 
-        .stSelectbox [role="option"] {
+        /* Dropdown List Options (The list that opens up) */
+        li[role="option"] {
             color: #1e293b !important;
             background-color: #ffffff !important;
         }
-
-        .stSelectbox [role="option"][aria-selected="true"] {
+        
+        /* Highlighted Option in Dropdown */
+        li[role="option"][aria-selected="true"] {
             background-color: #0ea5e9 !important;
             color: #ffffff !important;
         }
 
-        .stSelectbox [role="listbox"] {
-            background-color: #ffffff !important;
-        }
-
+        /* The Down Arrow Icon */
         .stSelectbox svg {
-            color: #1e293b !important;
-        }
-
-        .stSelectbox > div > div > div {
-            color: #1e293b !important;
-        }
-
-        .stSelectbox input {
-            color: #1e293b !important;
-        }
-
-        .stSelectbox [data-baseweb="select"] input {
-            color: #1e293b !important;
-        }
-
-        .stSelectbox .baseweb__select__value {
+            fill: #1e293b !important;
             color: #1e293b !important;
         }
 

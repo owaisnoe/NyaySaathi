@@ -381,67 +381,428 @@ def create_pdf_bytes(doc_text, doc_type):
 def inject_custom_css():
     st.markdown("""
     <style>
-        /* Main Form Container */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap');
+
+        /* ===== GLOBAL STYLES ===== */
+        * {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Main App Background with Gradient */
+        .stApp {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            background-attachment: fixed;
+        }
+
+        /* ===== HEADER SECTION ===== */
+        .doc-header {
+            color: #ffffff;
+            text-align: center;
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            font-size: 3.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .doc-subheader {
+            color: #94a3b8;
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.2s backwards;
+        }
+
+        /* ===== SELECTBOX STYLING ===== */
+        .stSelectbox {
+            margin-bottom: 2rem;
+        }
+
+        .stSelectbox > div > div {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            color: #1e293b;
+            padding: 0.75rem 1rem;
+        }
+
+        .stSelectbox > div > div:hover {
+            border-color: #0ea5e9;
+            box-shadow: 0 6px 25px rgba(14, 165, 233, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* ===== FORM CONTAINER ===== */
         .stForm {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            border: 1px solid #e0e0e0;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            padding: 3rem;
+            border-radius: 24px;
+            border: 2px solid #e2e8f0;
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out 0.3s backwards;
         }
-        
-        /* Typography inside form (Force Dark Text) */
-        .stForm h1, .stForm h2, .stForm h3, .stForm p, .stForm label, .stForm div {
-            color: #333333 !important;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+        .stForm::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #0ea5e9 0%, #06b6d4 50%, #0ea5e9 100%);
+            background-size: 200% 100%;
+            animation: shimmer 3s linear infinite;
         }
-        
-        /* Input Fields */
-        .stTextInput > div > div > input, 
+
+        /* Form Headers */
+        .stForm h1, .stForm h2, .stForm h3 {
+            color: #0f172a !important;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            margin-top: 0;
+        }
+
+        .stForm h3 {
+            font-size: 1.5rem;
+            letter-spacing: -0.01em;
+            margin-bottom: 1.5rem;
+        }
+
+        .stForm p, .stForm label, .stForm div {
+            color: #475569 !important;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Caption Styling */
+        .stForm [data-testid="stCaptionContainer"] {
+            color: #64748b !important;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ===== INPUT FIELDS ===== */
+        .stTextInput > div > div > input,
         .stTextArea > div > div > textarea,
         .stNumberInput > div > div > input,
         .stDateInput > div > div > input {
-            background-color: #f9f9f9 !important;
-            color: #000000 !important;
-            border: 1px solid #cccccc;
-            border-radius: 8px;
-            padding: 10px;
-        }
-        
-        /* Input Focus Effect */
-        .stTextInput > div > div > input:focus, 
-        .stTextArea > div > div > textarea:focus {
-            border-color: #00FFD1;
-            box-shadow: 0 0 5px rgba(0, 255, 209, 0.4);
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.875rem 1rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
-        /* Paper Preview Box */
+        .stTextInput > div > div > input:hover,
+        .stTextArea > div > div > textarea:hover,
+        .stNumberInput > div > div > input:hover,
+        .stDateInput > div > div > input:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Input Focus Effect */
+        .stTextInput > div > div > input:focus,
+        .stTextArea > div > div > textarea:focus,
+        .stNumberInput > div > div > input:focus,
+        .stDateInput > div > div > input:focus {
+            border-color: #0ea5e9 !important;
+            box-shadow:
+                0 0 0 3px rgba(14, 165, 233, 0.1),
+                0 4px 16px rgba(14, 165, 233, 0.15) !important;
+            outline: none;
+            transform: translateY(-1px);
+        }
+
+        /* Textarea Specific */
+        .stTextArea > div > div > textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* Labels */
+        label {
+            font-weight: 600 !important;
+            color: #1e293b !important;
+            font-size: 0.9rem !important;
+            margin-bottom: 0.5rem !important;
+            display: block;
+            letter-spacing: 0.01em;
+        }
+
+        /* ===== BUTTONS ===== */
+        .stButton > button {
+            background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2.5rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.02em;
+            box-shadow:
+                0 10px 30px rgba(14, 165, 233, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stButton > button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .stButton > button:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 15px 40px rgba(14, 165, 233, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+        }
+
+        .stButton > button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .stButton > button:active {
+            transform: translateY(0);
+        }
+
+        /* Download Button */
+        .stDownloadButton > button {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2.5rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow:
+                0 10px 30px rgba(16, 185, 129, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+            width: 100%;
+        }
+
+        .stDownloadButton > button:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 15px 40px rgba(16, 185, 129, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+        }
+
+        /* ===== PAPER PREVIEW BOX ===== */
         .preview-box {
             background-color: #ffffff;
-            color: #000000; /* Black text */
-            padding: 40px;
-            margin-top: 20px;
-            border: 1px solid #dcdcdc;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-            border-radius: 2px; /* Sharp corners for paper look */
-            font-family: 'Times New Roman', Times, serif; /* Legal Font */
-            font-size: 14px;
-            line-height: 1.6;
-            white-space: pre-wrap; /* Respects newlines */
+            color: #1e293b;
+            padding: 4rem 3.5rem;
+            margin: 2rem 0;
+            border: 1px solid #d1d5db;
+            box-shadow:
+                0 25px 50px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(0, 0, 0, 0.05),
+                0 -2px 15px rgba(0, 0, 0, 0.05) inset;
+            border-radius: 4px;
+            font-family: 'Georgia', 'Times New Roman', Times, serif;
+            font-size: 15px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            position: relative;
+            animation: fadeIn 0.6s ease-out;
         }
-        
-        /* Header Styling */
-        .doc-header {
-            color: #FAFAFA;
-            text-align: center;
-            font-weight: bold;
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+
+        .preview-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                repeating-linear-gradient(
+                    transparent,
+                    transparent 1.8rem,
+                    rgba(14, 165, 233, 0.03) 1.8rem,
+                    rgba(14, 165, 233, 0.03) calc(1.8rem + 1px)
+                );
+            pointer-events: none;
         }
-        .doc-subheader {
-            color: #cccccc;
-            text-align: center;
-            margin-bottom: 30px;
+
+        /* ===== SUCCESS/ERROR MESSAGES ===== */
+        .stSuccess {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-left: 4px solid #10b981;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            color: #065f46;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
+            animation: slideInRight 0.4s ease-out;
+        }
+
+        .stError {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-left: 4px solid #ef4444;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            color: #991b1b;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.15);
+            animation: shake 0.4s ease-out;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* ===== SCROLLBAR STYLING ===== */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+            border-radius: 10px;
+            border: 2px solid #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #0284c7 0%, #0891b2 100%);
+        }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 768px) {
+            .doc-header {
+                font-size: 2.5rem;
+            }
+
+            .doc-subheader {
+                font-size: 0.95rem;
+            }
+
+            .stForm {
+                padding: 2rem 1.5rem;
+            }
+
+            .preview-box {
+                padding: 2.5rem 2rem;
+                font-size: 14px;
+            }
+        }
+
+        /* ===== PRINT STYLES ===== */
+        @media print {
+            .stApp {
+                background: white;
+            }
+
+            .preview-box {
+                box-shadow: none;
+                border: 1px solid #000;
+                page-break-inside: avoid;
+            }
+
+            .stButton, .stDownloadButton, .doc-header, .doc-subheader, .stForm {
+                display: none;
+            }
         }
     </style>
     """, unsafe_allow_html=True)

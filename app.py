@@ -78,7 +78,7 @@ except Exception as e:
     st.stop()
 
 DB_FAISS_PATH = "vectorstores/db_faiss"
-MODEL_NAME = "gemini-1.5-pro" 
+MODEL_NAME = "gemini-2.5-flash" 
 
 
 # --- RAG PROMPT TEMPLATE ---
@@ -441,6 +441,5 @@ else:
 # --- DISCLAIMER ---
 st.divider()
 st.error("""
-**Disclaimer:** I am an AI, not a lawyer. This is not legal advice.
-Please consult a real lawyer or contact your local **NALSA (National Legal Services Authority)** for free legal aid.
+**Note:** If you cannot afford legal services like hiring a lawyer or paying the court fees then please contact your local **NALSA (National Legal Services Authority)** for free legal aid or fee Waiver.
 """)

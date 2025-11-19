@@ -8,5 +8,6 @@ sentence-transformers
 langchain-community
 Pillow
 fpdf2
+gtts
 
 # Forcing a hard reset v2

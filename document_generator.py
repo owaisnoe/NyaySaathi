@@ -563,14 +563,23 @@ def inject_custom_css():
             resize: vertical;
         }
 
-        /* Labels */
-        label {
+        /* ===== SMART LABELS ===== */
+        
+        /* 1. Global Labels: Default to LIGHT text (for the dark background) */
+        label, .stMarkdown p {
+            color: #e2e8f0 !important; /* Light Gray/White */
+            font-family: 'Inter', sans-serif !important;
             font-weight: 600 !important;
-            color: #1e293b !important;
-            font-size: 0.9rem !important;
+            font-size: 0.95rem !important;
             margin-bottom: 0.5rem !important;
-            display: block;
             letter-spacing: 0.01em;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Subtle shadow for readability */
+        }
+
+        /* 2. Form Labels: Override to DARK text (specifically inside the white .stForm) */
+        .stForm label, .stForm .stMarkdown p {
+            color: #1e293b !important; /* Dark Slate */
+            text-shadow: none;
         }
 
         /* ===== BUTTONS ===== */

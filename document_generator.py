@@ -816,6 +816,7 @@ def inject_custom_css():
             .preview-box {
                 padding: 2.5rem 2rem;
                 font-size: 14px;
+                color: white;
             }
         }
 

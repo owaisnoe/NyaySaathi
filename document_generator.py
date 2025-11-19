@@ -463,6 +463,22 @@ def inject_custom_css():
             color: #1e293b !important;
         }
 
+        .stSelectbox > div > div > div {
+            color: #1e293b !important;
+        }
+
+        .stSelectbox input {
+            color: #1e293b !important;
+        }
+
+        .stSelectbox [data-baseweb="select"] input {
+            color: #1e293b !important;
+        }
+
+        .stSelectbox .baseweb__select__value {
+            color: #1e293b !important;
+        }
+
         /* ===== FORM CONTAINER ===== */
         .stForm {
             background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);

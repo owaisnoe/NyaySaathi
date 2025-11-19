@@ -429,20 +429,38 @@ def inject_custom_css():
         }
 
         .stSelectbox > div > div {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            color: #1e293b;
-            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+            border: 2px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08) !important;
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 600 !important;
+            color: #1e293b !important;
+            padding: 0.75rem 1rem !important;
         }
 
         .stSelectbox > div > div:hover {
-            border-color: #0ea5e9;
-            box-shadow: 0 6px 25px rgba(14, 165, 233, 0.15);
-            transform: translateY(-2px);
+            border-color: #0ea5e9 !important;
+            box-shadow: 0 6px 25px rgba(14, 165, 233, 0.15) !important;
+            transform: translateY(-2px) !important;
+        }
+
+        .stSelectbox [role="option"] {
+            color: #1e293b !important;
+            background-color: #ffffff !important;
+        }
+
+        .stSelectbox [role="option"][aria-selected="true"] {
+            background-color: #0ea5e9 !important;
+            color: #ffffff !important;
+        }
+
+        .stSelectbox [role="listbox"] {
+            background-color: #ffffff !important;
+        }
+
+        .stSelectbox svg {
+            color: #1e293b !important;
         }
 
         /* ===== FORM CONTAINER ===== */

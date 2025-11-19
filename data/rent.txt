@@ -1,0 +1,27 @@
+
+### **1. Overview and Objectives**
+* **Enactment Date:** April 15, 1853.
+* **Purpose:** The Act was enacted to address confusion regarding the jurisdiction of Collectors and other officers in handling summary suits for arrears of rent and sales of *Putnee Talooks* and other tenures.
+* [cite_start]**Historical Context:** Previous regulations had transferred powers from Judges to Collectors of Land Revenue, but doubts arose about jurisdiction when lands were situated across multiple districts or collectorates [cite: 5645-5647].
+
+### **2. Jurisdiction for Sales and Suits (Sections 1 & 2)**
+The Act clarifies which Collector has authority when lands are spread across different jurisdictions:
+* **Single Collectorate:** If all lands are within one Collectorate, that Collector has jurisdiction.
+* [cite_start]**Multiple Collectorates:** If lands under one tenure/lease are situated in two or more Collectorates, the Collector in whose jurisdiction the **greater part** of the lands lies shall conduct the sale and decide the suit [cite: 5656-5659].
+* **Disputes:** If a Collector doubts their jurisdiction, they must report to the Board of Revenue. [cite_start]The Board's order is final and conclusive[cite: 5660].
+
+### **3. Definitions (Sections 3, 4, & 5)**
+* **"Collectorate":** Defined as the zillah or district to which a Collector is appointed. [cite_start]Lands outside these limits are not part of the Collectorate, even if they are part of an estate paying revenue to that Collector[cite: 5661].
+* **Independent Deputy Collector:** An officer appointed by the Government to act independently of a Collector. [cite_start]Their district is deemed a "Collectorate," and they have the powers of a Collector within that district [cite: 5662-5663].
+
+### **4. Procedures and Notices (Sections 6, 7, & 8)**
+* **Notices:** Notices of sale by an Independent Deputy Collector can be posted at their *Cutcherry* (office).
+* [cite_start]**Jurisdiction:** An Independent Deputy Collector can exercise powers anywhere within their Deputy Collectorate[cite: 5665].
+* [cite_start]**Publication:** Advertisement notices must be posted at the Zillah Court or local *Adawlut* within the jurisdiction where the lands (or the greater portion of them) are situated[cite: 5666].
+
+### **5. Validation of Past Acts (Section 9)**
+[cite_start]The Act validates previous orders, decisions, or sales that might otherwise have been deemed invalid due to being conducted by the "wrong" officer or notices being posted at the "wrong" *Cutcherry*, provided no legal proceedings to dispute them had commenced before the passing of this Act [cite: 5667-5668].
+
+### **6. Extension of Laws (Section 10)**
+[cite_start]Certain provisions from **Act XXV of 1850** and **Regulation VIII of 1819** (as modified) are extended to apply to all sales conducted under **Act VIII of 1835** [cite: 5669-5671].
+

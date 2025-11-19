@@ -1,0 +1,65 @@
+
+### **1. Overview and Applicability**
+* **Purpose:** The Act amends the law relating to the divorce of persons professing the **Christian religion** and confers matrimonial jurisdiction upon certain courts.
+* **Applicability:**
+    * **Religion:** It applies only where the petitioner or respondent professes the **Christian religion**.
+    * **Territorial Extent:** It extends to the whole of India.
+        * *Note:* A footnote indicates it was made applicable to J&K and Ladakh in 2019.
+    * **Domicile Requirement:**
+        * For **Dissolution (Divorce):** The parties must be domiciled in India at the time the petition is presented.
+        * For **Nullity:** The marriage must have been solemnized in India *and* the petitioner must be resident in India at the time of presenting the petition.
+
+### **2. Jurisdiction (Courts)**
+* **District Court:** The primary jurisdiction for filing petitions (divorce, nullity, etc.) lies with the **District Court** within whose jurisdiction the husband and wife reside or last resided together.
+* **High Court:** Has "Extraordinary Jurisdiction" to remove, try, and determine suits instituted in a District Court or transfer them to another District Court.
+
+### **3. Dissolution of Marriage (Divorce)**
+
+#### **A. Grounds for Divorce (Contested) - Section 10**
+Either the husband or the wife can file for divorce on the following grounds:
+1.  **Adultery:** The respondent has committed adultery.
+2.  **Conversion:** The respondent has ceased to be Christian by converting to another religion.
+3.  **Unsound Mind:** Incurably of unsound mind for a continuous period of at least **2 years**.
+4.  **Venereal Disease:** Suffering from a communicable venereal disease for at least **2 years**.
+5.  **Presumed Death:** Not heard of as being alive for **7 years** or more.
+6.  **Refusal to Consummate:** Willful refusal to consummate the marriage.
+7.  **Non-Compliance with Restitution Decree:** Failed to comply with a decree for restitution of conjugal rights for **2 years** or more.
+8.  **Desertion:** Deserted the petitioner for at least **2 years**.
+9.  **Cruelty:** Treated the petitioner with such cruelty that it is harmful/injurious to live with the respondent.
+    * *Note:* A wife can also petition if the husband is guilty of rape, sodomy, or bestiality.
+
+#### **B. Mutual Consent Divorce - Section 10A**
+Parties can jointly petition for divorce if:
+* They have been living separately for **2 years or more**.
+* They have not been able to live together.
+* They mutually agree that the marriage should be dissolved.
+* **Cooling-off Period:** A motion must be made between **6 and 18 months** after the initial petition to finalize the decree.
+
+### **4. Nullity of Marriage (Annulment)**
+A marriage may be declared **null and void** (as if it never existed) by the District Court on the following grounds:
+1.  **Impotency:** Respondent was impotent at the time of marriage and at the time of the suit.
+2.  **Prohibited Degrees:** Parties are within prohibited degrees of consanguinity (blood relationship) or affinity.
+3.  **Lunacy/Idiocy:** Either party was a lunatic or idiot at the time of marriage.
+4.  **Bigamy:** Former husband/wife was living at the time of marriage, and that previous marriage was in force.
+
+### **5. Judicial Separation**
+This is an alternative to divorce where the marriage subsists but the couple lives apart.
+* **Grounds:** Adultery, cruelty, or desertion for **2 years** or upwards.
+* **Legal Effect:** The wife is considered "unmarried" (spinster) with respect to property acquired during separation and for purposes of contracts/suing.
+
+### **6. Restitution of Conjugal Rights**
+If one spouse withdraws from the society of the other without reasonable excuse, the other may petition for **Restitution of Conjugal Rights**.
+
+### **7. Financial Provisions & Custody**
+
+| Provision | Description | Section |
+| :--- | :--- | :--- |
+| **Alimony Pendente Lite** | Interim maintenance paid during the pendency of the suit. The Court can order an amount it deems "just". | |
+| **Permanent Alimony** | Gross sum or monthly/weekly payments ordered by the Court after a decree of divorce or judicial separation, based on the wife's fortune and husband's ability. | |
+| **Custody of Children** | The Court can make interim or permanent orders regarding the custody, maintenance, and education of minor children. | |
+
+### **8. Important Procedural Elements**
+* **Co-Respondent:** In cases of adultery, the alleged adulterer must be made a co-respondent unless excused by the Court on specific grounds (e.g., the person is dead or unknown).
+* **Collusion:** The Court must be satisfied there is no collusion (secret agreement) between the parties to obtain the divorce.
+* **Remarriage:** Parties can marry again only after the decree becomes final and the time for appeal has expired (or appeal is dismissed).
+

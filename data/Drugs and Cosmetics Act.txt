@@ -1,0 +1,54 @@
+s### **1. Overview and Purpose**
+[cite_start]The Act regulates the import, manufacture, distribution, and sale of drugs and cosmetics in India[cite: 693]. Its primary objective is to ensure that drugs and cosmetics sold in India are safe, effective, and conform to prescribed quality standards.
+
+### **2. Key Definitions**
+The Act provides specific definitions for various categories of items to ensure clarity in regulation:
+
+* [cite_start]**Drug:** Includes medicines for internal or external use for humans or animals, substances used for diagnosis, treatment, mitigation, or prevention of disease, insect repellents (like mosquito repellents), and empty gelatin capsules[cite: 734, 736]. [cite_start]It also includes medical devices specified by the Central Government[cite: 737].
+* [cite_start]**Cosmetic:** Any article intended to be rubbed, poured, sprinkled, or sprayed on the human body for cleansing, beautifying, promoting attractiveness, or altering appearance[cite: 732].
+* [cite_start]**Ayurvedic, Siddha, or Unani Drug:** Medicines manufactured exclusively in accordance with formulae described in authoritative books specified in the First Schedule of the Act[cite: 727].
+* [cite_start]**Misbranded Drug:** A drug is misbranded if it is not labeled correctly, or if it is colored/coated to conceal damage, or if it makes false claims[cite: 855].
+* [cite_start]**Adulterated Drug:** A drug consisting of filthy/decomposed substances, prepared under insanitary conditions, or containing toxic substances injurious to health[cite: 860, 871].
+* [cite_start]**Spurious Drug:** A drug imported or manufactured under a name belonging to another drug, or if it is an imitation/substitute, or bears the name of a fictitious manufacturer[cite: 878, 1009].
+
+### **3. Regulatory Bodies**
+The Act establishes several bodies to advise the government and enforce regulations:
+
+* [cite_start]**Drugs Technical Advisory Board (DTAB):** Advises the Central and State Governments on technical matters arising out of the administration of the Act[cite: 795].
+* [cite_start]**Central Drugs Laboratory:** Established to carry out functions entrusted by the Act, such as analysis and testing[cite: 827].
+* [cite_start]**Drugs Consultative Committee:** An advisory committee constituted to secure uniformity in the administration of the Act throughout India[cite: 844].
+* [cite_start]**Ayurvedic, Siddha and Unani Drugs Technical Advisory Board:** Specifically advises on technical matters regarding these traditional systems of medicine[cite: 1382].
+
+
+### **4. Regulation of Import (Chapter III)**
+The Act prohibits the import of:
+* [cite_start]Drugs or cosmetics that are not of standard quality[cite: 903].
+* [cite_start]Misbranded, adulterated, or spurious drugs and cosmetics[cite: 903, 904].
+* [cite_start]Drugs or cosmetics requiring a license if imported without one[cite: 905].
+* [cite_start]Drugs claiming to cure or mitigate specific diseases prescribed by rules (e.g., magical remedies)[cite: 907].
+
+**Penalties for Illegal Import:**
+* [cite_start]Importing adulterated/spurious drugs: Imprisonment up to 3 years and fine up to ₹5,000[cite: 966].
+* [cite_start]Importing prohibited drugs/cosmetics: Imprisonment up to 6 months and/or fine[cite: 967].
+
+### **5. Regulation of Manufacture, Sale, and Distribution (Chapter IV)**
+State Governments regulate this section. [cite_start]It prohibits the manufacture, sale, or distribution of substandard, misbranded, adulterated, or spurious drugs and cosmetics[cite: 1042, 1043].
+
+**Inspectors and Analysts:**
+* [cite_start]**Inspectors:** Appointed by Central/State governments, they have the power to inspect premises, take samples, search persons/vehicles, and seize stocks or records[cite: 1106, 1111, 1127].
+* [cite_start]**Government Analysts:** They test or analyze samples submitted by Inspectors and provide reports[cite: 1102, 1176].
+
+**Penalties for Manufacture/Sale Offences (Section 27):**
+* [cite_start]**Adulterated/Spurious drugs causing death/grievous hurt:** Imprisonment not less than 10 years (up to life) and fine not less than ₹10 lakh or 3 times the value of confiscated drugs[cite: 1198, 1199].
+* [cite_start]**Spurious drugs (no grievous hurt):** Imprisonment not less than 7 years (up to life) and fine not less than ₹3 lakh[cite: 1230].
+* [cite_start]**Adulterated drugs (no grievous hurt):** Imprisonment not less than 3 years (up to 5 years) and fine not less than ₹1 lakh[cite: 1228].
+
+### **6. Special Provisions**
+* [cite_start]**Confiscation:** Stocks of illegal drugs/cosmetics, along with machinery, vehicles, and packaging used for the offence, are liable to confiscation[cite: 1272].
+* [cite_start]**Special Courts:** The government may designate Courts of Session as Special Courts to try offences relating to adulterated or spurious drugs[cite: 1564].
+* [cite_start]**Cognizable Offences:** Offences related to adulterated/spurious drugs are cognizable (police can arrest without warrant) and non-bailable[cite: 1576, 1578].
+
+### **7. Schedules**
+* [cite_start]**First Schedule:** Lists authoritative books for Ayurvedic, Siddha, and Unani systems (e.g., Charaka Samhita, Sushruta Samhita)[cite: 1600].
+* [cite_start]**Second Schedule:** Specifies the standards to be complied with by imported or manufactured drugs (e.g., Patent medicines must list ingredients; vaccines must match international standards)
+

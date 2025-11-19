@@ -1,0 +1,71 @@
+### **1. Overview and Objectives**
+[cite_start]The Act was enacted to provide for the conservation of biological diversity, sustainable use of its components, and fair and equitable sharing of benefits arising out of the use of biological resources[cite: 110].
+* [cite_start]It acknowledges India's richness in biological diversity and traditional knowledge[cite: 111].
+* [cite_start]It fulfills India's obligations under the United Nations Convention on Biological Diversity (CBD) and the Nagoya Protocol[cite: 112, 116].
+
+### **2. Key Definitions**
+* [cite_start]**Biological Diversity:** Variability among living organisms from all sources and the ecological complexes they belong to, including diversity within species, between species, and of ecosystems[cite: 135].
+* [cite_start]**Biological Resources:** Plants, animals, micro-organisms, genetic material, and derivatives with actual or potential use, excluding human genetic material[cite: 136].
+* [cite_start]**Access:** Collecting, procuring, or possessing biological resources or associated traditional knowledge for research, bio-survey, or commercial utilization[cite: 125].
+
+### **3. Institutional Structure**
+The Act establishes a three-tier institutional structure to implement its provisions:
+
+
+**A. National Biodiversity Authority (NBA)**
+* [cite_start]**Establishment:** A body corporate established by the Central Government, headquartered in Chennai[cite: 205, 206, 207].
+* [cite_start]**Composition:** A Chairperson, ex officio members representing various ministries (Agriculture, Biotechnology, Environment, etc.), and non-official experts[cite: 209, 210, 224].
+* **Functions:**
+    * [cite_start]Regulate activities regarding access to resources by foreigners and IP rights[cite: 273].
+    * [cite_start]Advise the Central Government on conservation and benefit sharing[cite: 281].
+    * [cite_start]Oppose the grant of intellectual property rights outside India on Indian biological resources[cite: 286].
+
+**B. State Biodiversity Board (SBB)**
+* [cite_start]**Establishment:** Established by State Governments for their respective states[cite: 333]. [cite_start]Union Territories are handled by the NBA[cite: 335].
+* **Functions:**
+    * [cite_start]Advise the State Government on conservation and sustainable use[cite: 345].
+    * [cite_start]Regulate access to biological resources by Indian citizens for commercial utilization[cite: 346].
+
+**C. Biodiversity Management Committees (BMCs)**
+* [cite_start]**Constitution:** Every local body (Panchayats and Municipalities) must constitute a BMC[cite: 458].
+* [cite_start]**Functions:** Promoting conservation, sustainable use, documentation of biodiversity (landraces, folk varieties), and chronicling associated traditional knowledge[cite: 458, 460].
+* [cite_start]**Powers:** They can levy collection fees for accessing biological resources within their jurisdiction[cite: 476].
+
+### **4. Regulation of Access to Biological Resources**
+
+The Act creates different approval mechanisms based on the applicant's status:
+
+* [cite_start]**Foreigners/NRIs/Foreign Entities:** Must obtain **prior approval** from the **National Biodiversity Authority (NBA)** to obtain biological resources or knowledge for research, commercial utilization, or bio-survey[cite: 161, 162, 163]. This applies to:
+    * [cite_start]Non-citizens[cite: 164].
+    * [cite_start]Non-resident Indians (NRIs)[cite: 165].
+    * [cite_start]Organizations not incorporated in India or incorporated in India with foreign participation/control[cite: 167, 168].
+* [cite_start]**Indian Citizens/Entities:** Must give **prior intimation** to the **State Biodiversity Board (SBB)** before accessing resources for commercial utilization[cite: 195].
+    * [cite_start]**Exemptions:** Local people, communities, growers, and cultivators, as well as *vaids* and *hakims* practicing indigenous medicine, are exempt from this requirement[cite: 196].
+
+**Transfer of Results:**
+[cite_start]Results of research on biological resources cannot be transferred to foreign persons/entities without the NBA's prior written approval[cite: 170].
+
+**Intellectual Property Rights (IPR):**
+[cite_start]Anyone applying for IPR (like a patent) in or outside India for an invention based on Indian biological resources must obtain prior approval from the NBA[cite: 188]. [cite_start]The NBA may impose benefit-sharing fees or royalties[cite: 191].
+
+### **5. Benefit Sharing**
+* [cite_start]**Determination:** The NBA determines "fair and equitable benefit sharing" when granting approvals[cite: 311].
+* [cite_start]**Methods:** Benefits can be shared via joint ownership of IPR, technology transfer, location of production units to benefit locals, venture capital funds, or monetary compensation to benefit claimers[cite: 313, 314, 315, 317, 318].
+* [cite_start]**Direct Payment:** Money can be paid directly to benefit claimers (individuals or groups) or deposited in the National Biodiversity Fund[cite: 328, 329].
+
+### **6. Funds and Finance**
+The Act establishes specific funds to support its objectives:
+* [cite_start]**National Biodiversity Fund:** Used for channeling benefits to claimers, conservation, and socio-economic development of areas from where resources were accessed[cite: 366, 370, 371, 379].
+* [cite_start]**State Biodiversity Fund:** Used for management of heritage sites, compensation/rehabilitation, and supporting BMCs[cite: 392, 397, 398, 407].
+* [cite_start]**Local Biodiversity Fund:** Received from grants and fees collected by BMCs, used for conservation within the local body's jurisdiction and community benefit[cite: 480, 486, 487].
+
+### **7. Offences and Penalties**
+* **Penalties:** Contravention of access regulations (Sections 3, 4, 6, or 7) attracts a penalty between **one lakh to fifty lakh rupees**. If damage exceeds this, the penalty is commensurate with the damage. [cite_start]Continuing contravention can lead to a penalty up to **one crore rupees**[cite: 545, 546].
+* [cite_start]**Adjudication:** An adjudicating officer (not below Joint Secretary rank) holds inquiries to impose penalties[cite: 547].
+* [cite_start]**Appeals:** Appeals against the adjudicating officer's order lie with the **National Green Tribunal (NGT)**[cite: 552].
+* [cite_start]**Cognizance:** Courts take cognizance only on written complaints by the Central Government or an authorized officer/person/benefit claimer who has given 30 days notice[cite: 581, 587].
+
+### **8. Important Miscellaneous Provisions**
+* [cite_start]**Heritage Sites:** State Governments can notify areas of biodiversity importance as "Biodiversity Heritage Sites"[cite: 439].
+* [cite_start]**Threatened Species:** The Central Government can notify threatened species and regulate their collection[cite: 448].
+* [cite_start]**Exemptions:** The Act allows the Central Government to declare that provisions do not apply to biological resources normally traded as commodities[cite: 454].

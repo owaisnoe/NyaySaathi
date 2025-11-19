@@ -1,0 +1,39 @@
+
+### **1. Introduction and Objectives**
+The Act was passed on May 8, 1955, with the primary objective of establishing the **State Bank of India (SBI)**. This was done to transfer the undertaking of the **Imperial Bank of India** to the new entity and to extend banking facilities on a large scale, particularly in rural and semi-urban areas.
+
+### **2. Establishment and Capital**
+* **Incorporation:** The State Bank of India is a body corporate with perpetual succession and a common seal.
+* **Capital:** The authorized capital is set at **₹5,000 crores**, divided into shares of ₹10 each. The Central Government, in consultation with the Reserve Bank of India (RBI), can increase or reduce this capital.
+* **Government Holding:** The Central Government must always hold at least **51%** of the issued equity capital.
+
+### **3. Transfer of Undertaking**
+On the "appointed day" (July 1, 1955), the entire undertaking of the **Imperial Bank of India**—including all assets, liabilities, rights, powers, and employees—was transferred to the State Bank of India. [cite_start]Shareholders of the Imperial Bank were entitled to compensation as per the First Schedule of the Act [cite: 5475-5476].
+
+### **4. Management Structure**
+* **Central Board:** The general superintendence and direction of the bank's affairs are entrusted to the **Central Board of Directors**.
+* **Composition of Central Board:**
+    * Chairman (appointed by Central Govt).
+    * Managing Directors (up to 4, appointed by Central Govt).
+    * Directors elected by shareholders.
+    * Directors nominated by the Central Government (representing various interests like co-operative institutions, rural economy, etc.).
+    * One director nominated by the Central Government on the recommendation of the RBI.
+* **Local Boards:** Constituted at local head offices (Mumbai, Kolkata, Chennai, etc.) to advise the Central Board and perform delegated duties.
+
+### **5. Business Functions**
+The State Bank acts as an agent of the **Reserve Bank of India** at all places in India where it has a branch but the RBI does not. Its key functions include:
+* Paying, receiving, collecting, and remitting money/bullion on behalf of the Government.
+* Carrying on the business of banking as defined in the Banking Regulation Act, 1949.
+* It can acquire the business of other banking institutions with the sanction of the Central Government.
+
+### **6. Funds and Accounts**
+* **Integration and Development Fund:** Maintained to meet losses from branches established for developmental purposes (rural/semi-urban expansion) beyond what is commercially viable.
+* **Reserve Fund:** Consists of the reserve fund of the Imperial Bank transferred to SBI and further sums transferred from net profits.
+* **Audit:** Affairs are audited by two or more auditors appointed by the State Bank with the previous approval of the RBI. The auditors' report must be laid before Parliament.
+
+### **7. Miscellaneous Provisions**
+* **Secrecy:** The bank observes customary banking practices regarding fidelity and secrecy. Officers must sign a declaration of fidelity.
+* **Indemnity:** Directors and members of boards are indemnified against losses incurred in the discharge of their duties, except those caused by willful act or default.
+* **Liquidation:** The State Bank cannot be placed in liquidation except by an order of the Central Government.
+
+**Would you like to explore the specific powers of the *Central Board* or the details regarding the *Integration and Development Fund*?**

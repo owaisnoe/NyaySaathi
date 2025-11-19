@@ -1,0 +1,46 @@
+The **Airports Authority of India Act, 1994** (Act No. 55 of 1994) is an Act of the Parliament of India that provides for the constitution of the **Airports Authority of India (AAI)**. It facilitates the better administration and cohesive management of airports, civil enclaves, and aeronautical communication stations across India.
+
+This Act officially merged the undertakings of two previous bodies: the **International Airports Authority of India** and the **National Airports Authority**.
+
+### **1. Objectives and Applicability**
+The primary objective is to create a unified authority responsible for the development, finance, operation, and maintenance of airports.
+* **Applicability:** The Act applies to all airports (except those under the armed forces), civil enclaves, aeronautical communication stations, and training establishments related to air transport services.
+* **Private Airports:** It also applies to private airports specifically regarding air traffic services and issuing directions for security or national interest.
+
+### **2. Constitution of the Authority**
+* **Body Corporate:** The Authority is a body corporate with perpetual succession, a common seal, and the power to acquire property and contract.
+* **Members:** It consists of a Chairperson, the Director General of Civil Aviation (ex officio), and 8 to 14 other members appointed by the Central Government.
+* **Disqualification:** Individuals convicted of offences involving moral turpitude, undischarged insolvents, or those with financial conflicts of interest cannot be members.
+
+
+### **3. Key Functions (Section 12)**
+The AAI is mandated to manage airports, civil enclaves, and aeronautical communication stations efficiently. Its specific functions include:
+* **Infrastructure:** Planning, developing, constructing, and maintaining runways, terminals, and navigational aids.
+* **Services:** Providing air traffic service, air transport service, air safety services, and search and rescue facilities.
+* **Facilities:** Establishing warehouses, cargo complexes, hotels, and arranging postal or money exchange facilities.
+* **Training:** Establishing institutions for training officers and employees.
+* **Consultancy:** Providing consultancy and management services in India and abroad.
+
+### **4. Financial Provisions**
+* **Fees and Rent:** The Authority can charge fees for landing, parking, air traffic services, and passenger amenities with Central Government approval.
+* **Development Fees:** The Authority can levy development fees on embarking passengers to fund airport upgradation, new airport establishment, or equity investment in private airports.
+* **Fund:** The Authority maintains its own fund where all receipts are credited. It acts on business principles.
+
+### **5. Property and Contracts**
+* **Vesting of Assets:** All assets, rights, debts, and liabilities of the former International Airports Authority and National Airports Authority were transferred to the AAI.
+* **Leasing:** The Authority may lease airport premises to third parties for better management, provided it retains control over air traffic services and security.
+* **Land Acquisition:** Land needed by the Authority is deemed needed for a public purpose and can be acquired under the Land Acquisition Act.
+
+### **6. Eviction of Unauthorized Occupants (Chapter VA)**
+The Act establishes a mechanism to evict unauthorized occupants from airport premises:
+* **Eviction Officers:** The Authority appoints officers to handle eviction proceedings.
+* **Process:** The officer issues a show-cause notice, conducts a hearing, and can order eviction if satisfied the occupation is unauthorized.
+* **damages:** The officer can assess and require payment of damages for unauthorized use of premises.
+* **Offences:** Unlawful occupation of airport premises is a punishable offence with imprisonment up to six years.
+
+### **7. Government Control**
+* **Directives:** The Authority is bound by Central Government directions on policy matters.
+* **Supersession:** The Central Government can supersede the Authority for up to six months in cases of grave emergency or persistent default.
+* **Divestment:** The Government can temporarily divest the Authority of the management of any airport in the public interest.
+
+**Next Step:** Would you like to know specifically about the regulations regarding **eviction of unauthorized occupants** or the **fee structure** for airport services?

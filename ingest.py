@@ -1,6 +1,6 @@
 import os
-from langchain_text_splitters import RecursiveCharacterTextSplitter  # <- CHANGED
-from langchain_community.document_loaders import DirectoryLoader, TextLoader  # <- CHANGED
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
@@ -9,7 +9,17 @@ DB_FAISS_PATH = "vectorstores/db_faiss"
 
 def create_vector_db():
     print("Loading documents...")
-    loader = DirectoryLoader(DATA_PATH, glob='*.txt', loader_cls=TextLoader)
+    
+    # --- FIX START ---
+    # We add loader_kwargs={'encoding': 'utf-8'} to handle special characters
+    loader = DirectoryLoader(
+        DATA_PATH, 
+        glob='*.txt', 
+        loader_cls=TextLoader, 
+        loader_kwargs={'encoding': 'utf-8'}
+    )
+    # --- FIX END ---
+    
     documents = loader.load()
     
     print("Splitting documents into chunks...")

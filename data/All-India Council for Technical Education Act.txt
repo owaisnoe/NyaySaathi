@@ -1,0 +1,58 @@
+
+### **1. Overview and Objectives**
+* **Act Details:** It is Act No. 52 of 1987, enacted on December 23, 1987.
+* **Primary Purpose:** The Act was established to ensure:
+    * Proper planning and coordinated development of the technical education system throughout India.
+    * Qualitative improvement of technical education in relation to planned quantitative growth.
+    * Regulation and proper maintenance of norms and standards in the technical education system.
+
+### **2. Key Definitions (Chapter I)**
+* **Technical Education:** Defined broadly to include programmes of education, research, and training in:
+    * Engineering and Technology
+    * Architecture and Town Planning
+    * Management
+    * Pharmacy
+    * Applied Arts and Crafts.
+* **Technical Institution:** An institution (not being a University) that offers courses or programmes in technical education.
+
+### **3. Establishment and Composition (Chapter II)**
+* **The Council:** The Central Government establishes the "All India Council for Technical Education" (AICTE) as a body corporate with its head office in Delhi.
+* **Composition:** The Council is a broad-based body consisting of:
+    * **Leadership:** A Chairman and Vice-Chairman appointed by the Central Government.
+    * **Ex-Officio Members:** Includes the Secretary (Education), Educational Adviser (General), Chairmen of Regional Committees, and Chairmen of various Boards of Studies (Vocational, Technician, UG/PG Engineering, Management).
+    * **Representatives:** Members representing the Ministry of Finance, Ministry of Science and Technology, Parliament (Lok Sabha and Rajya Sabha), State/UT Governments, Industry/Commerce organizations, and professional bodies.
+    * **Key Agency Heads:** The Chairmen/Directors of UGC, IAMR, ICAR, and CSIR are also members.
+* **Term:** Non-ex-officio members generally hold office for a term of three years (five years for the first constitution).
+
+### **4. Powers and Functions (Chapter III)**
+This is the core operational section of the Act. The Council is tasked with ensuring coordinated development and maintaining standards.
+
+**Key Functions (Section 10):**
+* **Planning & Coordination:** Make forecasts of needed growth, coordinate development at all levels, and promote innovation/research.
+* **Funding:** Allocate and disburse grants to technical institutions and universities imparting technical education.
+* **Standard Setting:** Lay down norms and standards for curricula, physical facilities, staff patterns, staff qualifications, and examinations.
+* **Approvals:** Grant approval for starting new technical institutions and introducing new courses.
+* **Tuition Fees:** Fix norms and guidelines for charging tuition and other fees.
+* **Social Responsibility:** Formulate schemes for promoting technical education for women, handicapped, and weaker sections of society.
+* **Regulation:** Prevent commercialization of technical education and provide guidelines for admission of students.
+* **Accreditation:** Set up a **National Board of Accreditation (NBA)** to periodically evaluate technical institutions or programmes.
+
+**Inspection (Section 11):**
+The Council can inspect any technical institution or university department to ascertain financial needs or standards of teaching. The institution must report back to the Council on actions taken based on inspection recommendations.
+
+### **5. Organizational Bodies (Chapter IV)**
+To assist in its functions, the Council constitutes several bodies:
+1.  **Executive Committee:** Discharges functions assigned by the Council. It includes the Chairman, Vice-Chairman, Secretary (Education), and other key representatives.
+2.  **Boards of Studies:** Advises the Executive Committee on academic matters (curricula, norms, standards) in specific fields like Vocational Education, Technician Education, Undergraduate/Postgraduate Engineering, and Management Studies.
+3.  **Regional Committees:** Established to advise and assist the Council in planning and regulation within specific regions. The Act specifies committees for Northern (Kanpur), Southern (Madras), Western (Bombay), and Eastern (Calcutta) regions.
+
+
+### **6. Finance and Audit (Chapter V)**
+* **Fund:** The Council maintains its own Fund, credited with sums from the Central Government and other receipts.
+* **Budget:** The Council prepares an annual budget and forwards it to the Central Government.
+* **Audit:** Accounts are audited by the Comptroller and Auditor-General (CAG) of India, and the audit report is laid before Parliament.
+
+### **7. Government Control (Chapter VI)**
+* **Directions:** The Council is bound by directions on questions of policy given by the Central Government.
+* **Supersession:** The Central Government has the power to supersede the Council if it fails to perform its duties or abuses its powers.
+* **Rule Making:** Both the Central Government (Rules) and the Council (Regulations) have powers to frame legal instruments to carry out the purposes of the Act, which must be laid before Parliament.

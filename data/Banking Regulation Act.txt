@@ -1,0 +1,63 @@
+### **1. Introduction and Objectives**
+[cite_start]The Banking Regulation Act, 1949 (Act No. 10 of 1949) was enacted to consolidate and amend the law relating to banking in India[cite: 933, 934]. [cite_start]Originally extended to the whole of India (excluding Jammu and Kashmir at inception, but later included), it came into force on March 16, 1949[cite: 938, 939, 958].
+
+**Primary Objectives:**
+* To regulate the business of banking companies.
+* [cite_start]To protect the interests of depositors[cite: 968].
+* To control the opening of branches and changes in management.
+* [cite_start]To provide a mechanism for liquidation and speedy disposal of winding-up proceedings[cite: 864].
+
+### **2. Key Definitions (Section 5)**
+* [cite_start]**Banking:** Defined as the accepting of deposits of money from the public for the purpose of lending or investment, repayable on demand or otherwise, and withdrawable by cheque, draft, or order[cite: 965].
+* [cite_start]**Banking Company:** Any company that transacts the business of banking in India[cite: 966].
+* [cite_start]**Banking Policy:** Policy specified by the Reserve Bank of India (RBI) in the interest of the banking system, monetary stability, or sound economic growth[cite: 968].
+
+### **3. Business of Banking Companies**
+The Act outlines what businesses banks can and cannot engage in.
+
+* [cite_start]**Permitted Business (Section 6):** In addition to banking, companies may engage in borrowing/raising money, dealing in bills of exchange, issuing letters of credit, buying/selling bullion, administration of estates, and providing safe deposit vaults[cite: 1071, 1072, 1073, 1075, 1076, 1080].
+* [cite_start]**Prohibition of Trading (Section 8):** Banking companies are prohibited from directly or indirectly dealing in the buying, selling, or bartering of goods, except in connection with the realization of security or bills of exchange[cite: 1106].
+* [cite_start]**Disposal of Non-Banking Assets (Section 9):** Banks cannot hold immovable property (except for their own use) for a period exceeding seven years[cite: 1109].
+
+
+### **4. Management and Administration**
+To ensure professional management, the Act imposes specific restrictions:
+* [cite_start]**Prohibition of Managing Agents:** Banks cannot employ managing agents[cite: 1117].
+* [cite_start]**Board Composition (Section 10A):** At least 51% of the Board of Directors must consist of persons with special knowledge or practical experience in areas like accountancy, agriculture, banking, economics, finance, law, etc.[cite: 1160, 1166, 1167].
+* [cite_start]**Whole-time Chairman:** Every banking company must have a Chairman of the Board appointed on a whole-time basis, entrusted with the management of the company's affairs[cite: 1202].
+* [cite_start]**Term Limits:** No director (other than the Chairman/Whole-time Director) can hold office continuously for more than eight years[cite: 1189].
+
+### **5. Capital and Reserves**
+* **Minimum Capital (Section 11):** Banks must meet minimum paid-up capital and reserve requirements to operate. [cite_start]Foreign banks must deposit specific amounts with the RBI[cite: 1263, 1264, 1266].
+* **Reserve Fund (Section 17):** Every banking company incorporated in India must create a Reserve Fund. [cite_start]Before declaring a dividend, it must transfer at least 20% of its profit to this fund[cite: 1410].
+* [cite_start]**Cash Reserve (Section 18):** Non-scheduled banks must maintain a cash reserve (with themselves or in a current account with the RBI) equivalent to a specific percentage of their demand and time liabilities[cite: 1416].
+* [cite_start]**Liquidity (Section 24):** Banks must maintain a percentage of their assets in cash, gold, or approved securities (Statutory Liquidity Ratio)[cite: 1555].
+
+### **6. Regulatory Powers of the Reserve Bank of India (RBI)**
+The Act grants extensive powers to the RBI to regulate the banking sector:
+* [cite_start]**Licensing (Section 22):** No company can carry on banking business in India without a license from the RBI[cite: 1504].
+* [cite_start]**Opening Branches (Section 23):** Banks require prior RBI permission to open new places of business or change locations outside the same city/town[cite: 1539, 1540].
+* [cite_start]**Directions (Section 35A):** The RBI can issue directions to banking companies in the public interest or to prevent affairs detrimental to depositors[cite: 1749, 1751, 1753].
+* [cite_start]**Inspection (Section 35):** The RBI can inspect the books and accounts of any banking company[cite: 1716].
+* [cite_start]**Removal of Management (Section 36AA):** The RBI has the power to remove any chairman, director, chief executive officer, or other officers if necessary in the public interest[cite: 1817].
+
+
+### **7. Financial Statements and Audit**
+* [cite_start]**Balance Sheet (Section 29):** Banks must prepare a balance sheet and profit and loss account on the last working day of the year in the forms set out in the Third Schedule[cite: 1635].
+* **Audit (Section 30):** Accounts must be audited by a qualified person. [cite_start]The appointment or removal of auditors requires previous RBI approval[cite: 1670, 1671].
+
+### **8. Winding Up and Amalgamation**
+* [cite_start]**Suspension of Business (Section 37):** The High Court can grant a moratorium staying proceedings against a bank temporarily unable to meet obligations[cite: 1965].
+* [cite_start]**Winding Up (Section 38):** The High Court shall order the winding up of a banking company if it is unable to pay its debts or if the RBI applies for it[cite: 1974, 1975, 1976].
+* [cite_start]**Amalgamation (Section 44A):** Banking companies can amalgamate (merge) only if a scheme is approved by a two-thirds majority of shareholders and sanctioned by the RBI[cite: 2088, 2092].
+
+### **9. Co-operative Banks (Part V)**
+Section 56 modifies the Act to apply to co-operative societies. [cite_start]References to "banking company" are construed as references to "co-operative bank"[cite: 2542, 2557]. [cite_start]It outlines specific capital requirements and regulations for co-operative banks[cite: 2634].
+
+### **10. Recent Amendments (Noted in Source)**
+The source text includes amendments up to 2025, including:
+* [cite_start]**The Banking Regulation (Amendment) Act, 2020:** Changes regarding co-operative banks[cite: 749].
+* [cite_start]**The Banking Laws (Amendment) Act, 2025:** Updates to substantial interest definitions and director term limits[cite: 751, 1061, 1189].
+* [cite_start]**Depositor Education and Awareness Fund (Section 26A):** Establishment of a fund for unclaimed deposits (10+ years) to be used for depositor awareness[cite: 1612, 1613].
+
+**Would you like to explore the specific powers of the RBI regarding the *supersession of the Board of Directors* or the *penalties* for non-compliance?**

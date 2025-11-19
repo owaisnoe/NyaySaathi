@@ -1,0 +1,66 @@
+
+### **1. Introduction**
+The Electricity Act, 2003 (Act No. 36 of 2003) was enacted on May 26, 2003. It consolidates laws relating to generation, transmission, distribution, trading, and use of electricity in India.
+
+**Key Objectives:**
+* Promote competition in the electricity industry.
+* Protect consumer interests.
+* Supply electricity to all areas.
+* Rationalize electricity tariffs.
+* Ensure transparent policies regarding subsidies.
+* Promote efficient and environmentally benign policies.
+* Constitute the Central Electricity Authority (CEA) and Regulatory Commissions.
+
+### **2. National Policy and Plan (Part II)**
+* **National Electricity Policy:** The Central Government prepares this policy in consultation with State Governments and the CEA to develop the power system based on optimal utilization of resources (coal, hydro, nuclear, renewable, etc.).
+* **National Electricity Plan:** The CEA prepares this plan once every five years in accordance with the National Policy to guide the sector's development.
+* **Rural Electrification:** Joint responsibility of Central and State Governments to provide access to electricity to all villages and hamlets.
+
+### **3. Generation of Electricity (Part III)**
+* **De-licensing:** Generation is largely de-licensed. Any generating company can establish, operate, and maintain a generating station without a license if it complies with technical standards.
+* **Exceptions:** Hydro-electric projects involving capital expenditure above a certain limit require concurrence from the CEA.
+* **Captive Generation:** A person can set up a captive generating plant for their own use.
+
+### **4. Licensing (Part IV)**
+* **Mandatory License:** No person can transmit, distribute, or trade electricity without a license, unless exempted.
+* **Grant of License:** The Appropriate Commission (CERC or SERC) grants licenses for transmission, distribution, and trading.
+* **Deemed Licensees:** Entities like the Central Transmission Utility (CTU), State Transmission Utility (STU), Damodar Valley Corporation, and Appropriate Governments are deemed licensees.
+
+### **5. Transmission (Part V)**
+* **Structure:**
+    * **National Load Despatch Centre (NLDC):** For optimum scheduling and dispatch at the national level.
+    * **Regional Load Despatch Centres (RLDCs):** Apex bodies for integrated operation of the power system in each region.
+    * **State Load Despatch Centres (SLDCs):** Apex bodies for integrated operation within a state.
+* **Transmission Utilities:** Central Transmission Utility (CTU) at the national level and State Transmission Utilities (STUs) at the state level plan and coordinate the transmission systems.
+* **Open Access:** Non-discriminatory open access to transmission lines must be provided to licensees and generating companies.
+
+
+### **6. Distribution (Part VI)**
+* **Duty to Supply:** Distribution licensees have a duty to supply electricity on request within one month.
+* **Open Access in Distribution:** State Commissions are mandated to introduce open access in phases for consumers, subject to the payment of a surcharge to handle cross-subsidies.
+* **Consumer Grievances:** Licensees must establish a forum for redressal of consumer grievances. An **Ombudsman** is appointed by the State Commission to settle non-redressed grievances.
+* [cite_start]**Theft of Electricity:** Strict penalties and imprisonment (up to 3 years) are prescribed for theft of electricity, tampering with meters, etc. [cite: 4667-4675].
+
+### **7. Tariff (Part VII)**
+* **Determination:** Tariffs for generation, supply, transmission, and wheeling are determined by the Appropriate Commission.
+* **Principles:** Tariffs should reflect the cost of supply, encourage efficiency, reduce cross-subsidies, and promote renewable energy.
+* **Bidding:** Tariffs can also be determined through a transparent bidding process.
+
+### **8. Regulatory Commissions (Part IX & X)**
+* **Central Electricity Authority (CEA):** A technical body advising the government on policy, specifying technical standards, and collecting data.
+* **Regulatory Commissions:**
+    * **Central Electricity Regulatory Commission (CERC):** Regulates tariffs of central generating companies and inter-state transmission.
+    * **State Electricity Regulatory Commissions (SERCs):** Regulate intra-state transmission, distribution, and retail tariffs.
+
+### **9. Appellate Tribunal (Part XI)**
+* **Establishment:** The **Appellate Tribunal for Electricity (APTEL)** is established to hear appeals against orders of the adjudicating officers or Appropriate Commissions.
+* **Appeal:** Appeals against APTEL's orders lie with the Supreme Court.
+
+### **10. Offences and Penalties (Part XIV)**
+* **Theft:** Punishable with imprisonment and fines. Repeated convictions lead to debarment from electricity supply.
+* **Unauthorized Use:** Assessing officers can provisionally assess charges for unauthorized use (e.g., using domestic connection for commercial purposes).
+* **Special Courts:** State Governments can constitute Special Courts for speedy trial of offences like theft.
+
+### **11. Important Miscellaneous Provisions**
+* **Reorganization of Boards:** State Electricity Boards (SEBs) are to be unbundled/reorganized into separate generation, transmission, and distribution entities.
+* **Overriding Effect:** The Act overrides other laws inconsistent with it, with exceptions for Consumer Protection Act, Atomic Energy Act, and Railways Act.

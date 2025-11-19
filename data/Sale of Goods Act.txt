@@ -1,0 +1,59 @@
+
+### **1. Introduction**
+The Act was enacted to define and amend the law relating to the sale of goods in India. It came into force on **1st July, 1930** and extends to the whole of India.
+
+### **2. Key Definitions (Section 2)**
+* **Buyer & Seller:** A buyer is a person who buys or agrees to buy goods, and a seller is a person who sells or agrees to sell goods.
+* **Goods:** Every kind of movable property other than actionable claims and money. It includes stock, shares, growing crops, grass, and things attached to land agreed to be severed before sale.
+* **Specific Goods:** Goods identified and agreed upon at the time the contract of sale is made.
+* **Future Goods:** Goods to be manufactured, produced, or acquired by the seller after the contract is made.
+* **Price:** The money consideration for the sale of goods.
+* **Document of Title:** Includes bill of lading, warehouse keeper's certificate, railway receipt, warrant or order for delivery, etc.
+
+### **3. Contract of Sale (Chapter II)**
+* **Sale vs. Agreement to Sell (Section 4):**
+    * A **Sale** occurs when property in goods is transferred from seller to buyer for a price.
+    * An **Agreement to Sell** occurs when the transfer of property is to take place at a future time or subject to conditions.
+* **Formalities:** A contract can be oral, written, or implied by conduct.
+
+### **4. Conditions and Warranties**
+* **Condition:** A stipulation essential to the main purpose of the contract. [cite_start]Breach gives the right to reject the contract[cite: 15415].
+* **Warranty:** A stipulation collateral to the main purpose. [cite_start]Breach gives a right to claim damages but not to reject goods[cite: 15416].
+* **Implied Conditions (Section 14-17):**
+    * **Title:** The seller has the right to sell the goods.
+    * **Description:** Goods must correspond with the description.
+    * **Quality/Fitness:** Goods must be reasonably fit for the purpose if the buyer relies on the seller's skill/judgment.
+    * **Sample:** Bulk must correspond with the sample in quality.
+
+
+### **5. Transfer of Property (Chapter III)**
+* **Specific Goods:** Property passes when the parties intend it to pass (Sections 19-22). For specific goods in a deliverable state, it passes when the contract is made.
+* [cite_start]**Unascertained Goods:** Property passes only when goods are ascertained and unconditionally appropriated to the contract[cite: 15456].
+* **Risk:** Risk generally passes with property. [cite_start]If delivery is delayed by fault, the party in fault bears the risk [cite: 15469-15472].
+* [cite_start]**Transfer of Title (Nemo dat quod non habet):** A seller cannot pass a better title than they have, subject to exceptions like sale by mercantile agent or joint owner [cite: 15474-15477].
+
+### **6. Performance of Contract (Chapter IV)**
+* **Delivery:** It is the seller's duty to deliver and the buyer's duty to accept and pay.
+* **Types of Delivery:** Can be actual, symbolic (e.g., handing over keys), or constructive.
+* **Wrong Quantity:**
+    * Less quantity: Buyer can reject or accept (pay at contract rate).
+    * More quantity: Buyer can accept contract quantity and reject rest, or reject whole.
+    * Mixed goods: Buyer can accept agreed goods and reject the rest, or reject whole.
+
+### **7. Rights of Unpaid Seller (Chapter V)**
+An unpaid seller (one who hasn't been paid the full price) has three key rights against the goods:
+1.  [cite_start]**Lien:** Right to retain possession of goods until payment[cite: 15529, 15535].
+2.  [cite_start]**Stoppage in Transit:** Right to stop goods while they are with a carrier if the buyer becomes insolvent[cite: 15546].
+3.  [cite_start]**Resale:** Right to resell the goods under certain conditions[cite: 15532, 15570].
+
+
+### **8. Suits for Breach (Chapter VI)**
+* **Seller's Remedies:** Sue for price (Section 55) or damages for non-acceptance (Section 56).
+* **Buyer's Remedies:** Sue for damages for non-delivery (Section 57), specific performance (Section 58), or breach of warranty (Section 59).
+
+### **9. Auction Sale (Section 64)**
+* Sale is complete when the auctioneer announces it (e.g., fall of hammer).
+* Goods can be sold in lots.
+* Seller cannot bid unless the right is expressly reserved.
+
+**Would you like to know more about the *exceptions* to the rule that a non-owner cannot sell goods (Section 27-30)?**

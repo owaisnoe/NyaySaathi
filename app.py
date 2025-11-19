@@ -78,7 +78,7 @@ except Exception as e:
     st.stop()
 
 DB_FAISS_PATH = "vectorstores/db_faiss"
-MODEL_NAME = "gemini-1.5-flash" 
+MODEL_NAME = "gemini-2.5-pro" 
 
 
 # --- RAG PROMPT TEMPLATE ---

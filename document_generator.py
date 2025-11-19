@@ -425,11 +425,12 @@ def inject_custom_css():
 
         /* ===== SELECTBOX STYLING ===== */
         .stSelectbox {
+                background: #15EDED;
             margin-bottom: 2rem;
         }
 
         .stSelectbox > div > div {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+            background: linear-gradient(135deg, #15EDED 0%, #f8fafc 100%) !important;
             border: 2px solid #e2e8f0 !important;
             border-radius: 12px !important;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08) !important;

@@ -282,7 +282,7 @@ else:
                 st.info("PDF file uploaded. Click 'Ask!' to explain.")
             
             # RENAME BUTTON: Samjhao -> Ask
-            if st.button("Ask!", type="primary", key="samjhao_button"):
+            if st.button("Explain!", type="primary", key="samjhao_button"):
                 
                 spinner_text = "Your friend is reading and explaining..."
                 if "image" in file_type:

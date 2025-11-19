@@ -436,7 +436,7 @@ def inject_custom_css():
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08) !important;
             font-family: 'Inter', sans-serif !important;
             font-weight: 600 !important;
-            color: #1e293b !important;
+            color: #1e293b;
             padding: 0.75rem 1rem !important;
         }
 

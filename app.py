@@ -14,6 +14,7 @@ import base64
 import json
 import io
 from gtts import gTTS 
+import random # Added for random lawyer selection
 
 # --- IMPORT DOCUMENT GENERATOR ---
 from document_generator import show_document_generator 
@@ -63,8 +64,13 @@ div[data-testid="chat-message-container"] {
 .stTabs [data-baseweb="tab"][aria-selected="true"] {
     background: var(--secondary-background-color); color: var(--primary-color); border-bottom: 3px solid var(--primary-color);
 }
-div[data-testid="stVerticalBlock"] {
-    align-items: center;
+/* Lawyer Card CSS */
+.lawyer-card {
+    background-color: #262730;
+    border: 1px solid #00FFD1;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -79,6 +85,16 @@ except Exception as e:
 
 DB_FAISS_PATH = "vectorstores/db_faiss"
 MODEL_NAME = "gemini-2.5-flash" 
+
+# --- MOCK LAWYER DATABASE (For Tab 5) ---
+LAWYER_DIRECTORY = [
+    {"name": "Adv. Priya Sharma", "location": "Delhi/NCR", "specialization": "Family Law", "experience": "12 Years", "languages": "Hindi, English", "phone": "+91-98765XXXXX"},
+    {"name": "Adv. Rajesh Kumar", "location": "Mumbai", "specialization": "Property Dispute", "experience": "15 Years", "languages": "Marathi, Hindi, English", "phone": "+91-91234XXXXX"},
+    {"name": "Adv. Sneha Reddy", "location": "Bangalore", "specialization": "Corporate Law", "experience": "8 Years", "languages": "Kannada, Telugu, English", "phone": "+91-99887XXXXX"},
+    {"name": "Adv. Amit Verma", "location": "Lucknow", "specialization": "Criminal Law", "experience": "20 Years", "languages": "Hindi, Urdu", "phone": "+91-98712XXXXX"},
+    {"name": "Adv. Kavita Iyer", "location": "Chennai", "specialization": "Consumer Rights", "experience": "10 Years", "languages": "Tamil, English", "phone": "+91-94455XXXXX"},
+    {"name": "Adv. Vikram Singh", "location": "Chandigarh", "specialization": "Cyber Crime", "experience": "7 Years", "languages": "Punjabi, Hindi, English", "phone": "+91-98140XXXXX"}
+]
 
 
 # --- RAG PROMPT TEMPLATE ---
@@ -203,6 +219,11 @@ if "samjhao_explanation" not in st.session_state:
     st.session_state.samjhao_explanation = None
 if "file_uploader_key" not in st.session_state:
     st.session_state.file_uploader_key = 0
+# Initialize AI Brief
+if "case_brief" not in st.session_state:
+    st.session_state.case_brief = None
+if "recommended_lawyer_type" not in st.session_state:
+    st.session_state.recommended_lawyer_type = "General"
 
 
 # --- "START NEW SESSION" BUTTON ---
@@ -212,6 +233,7 @@ def clear_session():
     st.session_state.uploaded_file_bytes = None
     st.session_state.uploaded_file_type = None
     st.session_state.samjhao_explanation = None
+    st.session_state.case_brief = None # Clear brief
     st.session_state.file_uploader_key += 1 
 
 
@@ -248,8 +270,14 @@ else:
     st.divider()
 
     # --- THE TAB-BASED LAYOUT ---
-    # Tab 4 is now "Voice Mode"
-    tab1, tab2, tab3, tab4 = st.tabs(["**Ask** (Explain)", "**What to do** (Plan)", "**Draft Documents** (Create)", "**Voice Mode** (Talk)"])
+    # Updated tabs list
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "**Ask** (Explain)", 
+        "**What to do** (Plan)", 
+        "**Draft Documents** (Create)", 
+        "**Voice Mode** (Talk)",
+        "**Find Lawyer** (Connect)"
+    ])
 
     # --- TAB 1: ASK (EXPLAIN) ---
     with tab1:
@@ -433,57 +461,121 @@ else:
     with tab3:
         show_document_generator()
 
-    # --- TAB 4: VOICE MODE (WEB COMPATIBLE) ---
+    # --- TAB 4: VOICE MODE ---
     with tab4:
         st.header("Voice Chat (Web Compatible)")
         st.write("Record a voice note, and Nyay-Saathi will reply with audio!")
         
-        # New Streamlit Audio Input (Requires Streamlit 1.40+)
         audio_value = st.audio_input("Record your legal question")
 
         if audio_value:
-            st.audio(audio_value) # Play back what they recorded
+            st.audio(audio_value) 
             
             if st.button("Get Answer"):
                 with st.spinner("Listening and thinking..."):
                     try:
-                        # 1. Get Model
                         model = get_genai_model()
-                        
-                        # 2. Prepare Audio for Gemini
                         audio_bytes = audio_value.getvalue()
+                        prompt_text = f"Listen to this user audio. You are 'Nyay-Saathi', a helpful Indian legal assistant. Answer the user's question in simple {language}. Keep the answer short, helpful, and friendly."
                         
-                        # 3. Construct Prompt
-                        prompt_text = f"""
-                        Listen to this user audio. 
-                        You are 'Nyay-Saathi', a helpful Indian legal assistant. 
-                        Answer the user's question in simple {language}.
-                        Keep the answer short, helpful, and friendly.
-                        """
-                        
-                        # 4. Send to Gemini (Multimodal)
-                        response = model.generate_content([
-                            prompt_text,
-                            {
-                                "mime_type": "audio/wav",
-                                "data": audio_bytes
-                            }
-                        ])
-                        
+                        response = model.generate_content([prompt_text, {"mime_type": "audio/wav", "data": audio_bytes}])
                         response_text = response.text
                         
-                        # 5. Display Text
                         st.success("Nyay-Saathi says:")
                         st.markdown(response_text)
                         
-                        # 6. Generate Audio Response (TTS)
                         st.write("🔊 **Listen to the answer:**")
                         tts_audio = text_to_speech(response_text, language)
                         if tts_audio:
                             st.audio(tts_audio, format="audio/mp3")
-                            
                     except Exception as e:
                         st.error(f"Error processing audio: {e}")
+
+    # --- TAB 5: FIND LAWYER (INNOVATION) ---
+    with tab5:
+        st.header("👩‍⚖️ Find the Right Lawyer (Smart Match)")
+        st.markdown("""
+        **The Innovation:** Instead of blindly calling lawyers, Nyay-Saathi analyzes your conversation and documents to:
+        1. **Summarize your case** into a professional legal brief.
+        2. **Identify the category** (Family, Property, Criminal, etc.).
+        3. **Match you** with the right expert.
+        """)
+        st.divider()
+
+        # Check if we have any context to work with
+        has_context = len(st.session_state.messages) > 0 or st.session_state.document_context != "No document uploaded."
+
+        if not has_context:
+            st.info("Please chat with Nyay-Saathi in the 'What to do' tab or upload a document first. We need information to match you with a lawyer!")
+        else:
+            col_match, col_display = st.columns([1, 2])
+            
+            with col_match:
+                st.subheader("Step 1: AI Analysis")
+                if st.button("Generate Case Brief & Find Match", type="primary"):
+                    with st.spinner("AI is analyzing your case details..."):
+                        try:
+                            # Gather Context
+                            chat_summary = "\n".join([m["content"] for m in st.session_state.messages])
+                            doc_summary = st.session_state.document_context[:2000] # Limit length
+                            
+                            model = get_genai_model()
+                            match_prompt = f"""
+                            Analyze this user's legal situation based on their chat and documents.
+                            
+                            Chat History: {chat_summary}
+                            Document Context: {doc_summary}
+                            
+                            Output a JSON object with these 2 fields:
+                            1. "summary": A 3-sentence professional summary of the legal issue for a lawyer to read.
+                            2. "category": ONE of these exact categories: "Family Law", "Property Dispute", "Criminal Law", "Consumer Rights", "Corporate Law", "Cyber Crime". If unsure, use "General".
+
+                            JSON:
+                            """
+                            
+                            response = model.generate_content(match_prompt)
+                            cleaned_json = response.text.strip().replace("```json", "").replace("```", "")
+                            data = json.loads(cleaned_json)
+                            
+                            st.session_state.case_brief = data["summary"]
+                            st.session_state.recommended_lawyer_type = data["category"]
+                            
+                        except Exception as e:
+                            st.error(f"AI Analysis failed: {e}")
+                            # Fallback
+                            st.session_state.case_brief = "User needs legal assistance based on recent inquiries."
+                            st.session_state.recommended_lawyer_type = "General"
+
+            with col_display:
+                if st.session_state.case_brief:
+                    st.success(f"**Match Found: {st.session_state.recommended_lawyer_type}**")
+                    
+                    st.markdown("### 📄 Your AI Legal Brief")
+                    st.info(f"*{st.session_state.case_brief}*")
+                    st.caption("Show this summary to the lawyer to save time and money.")
+                    
+                    st.markdown("---")
+                    st.subheader(f"Recommended {st.session_state.recommended_lawyer_type} Lawyers")
+                    
+                    # Filter Mock Database
+                    found_lawyers = [l for l in LAWYER_DIRECTORY if l["specialization"] == st.session_state.recommended_lawyer_type]
+                    
+                    # If no exact match, show random ones (Fallback)
+                    if not found_lawyers:
+                        found_lawyers = random.sample(LAWYER_DIRECTORY, 2)
+                        st.warning(f"No specific {st.session_state.recommended_lawyer_type} experts in our demo database. Showing top rated lawyers:")
+
+                    for lawyer in found_lawyers:
+                        st.markdown(f"""
+                        <div class="lawyer-card">
+                            <h4>{lawyer['name']} <span style="font-size:0.8em; color:#00FFD1;">({lawyer['location']})</span></h4>
+                            <p><strong>Specialization:</strong> {lawyer['specialization']} | <strong>Exp:</strong> {lawyer['experience']}</p>
+                            <p><strong>Languages:</strong> {lawyer['languages']}</p>
+                            <a href="tel:{lawyer['phone']}" style="text-decoration:none;">
+                                <button style="background-color:#00FFD1; color:black; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📞 Call Now</button>
+                            </a>
+                        </div>
+                        """, unsafe_allow_html=True)
 
 # --- DISCLAIMER ---
 st.divider()

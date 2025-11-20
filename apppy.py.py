@@ -136,7 +136,7 @@ retriever, llm = get_models_and_db()
 def get_genai_model():
     return genai.GenerativeModel(MODEL_NAME)
 
-# --- NEW HELPER FUNCTION: Text to Speech ---
+# --- HELPER FUNCTION: Text to Speech ---
 def text_to_speech(text, language):
     """Converts text to audio bytes using gTTS."""
     try:
@@ -248,14 +248,13 @@ else:
     st.divider()
 
     # --- THE TAB-BASED LAYOUT ---
-    # RENAME: Samjhao -> Ask | Kya Karoon -> What to do
-    tab1, tab2, tab3 = st.tabs(["**Ask** (Explain)", "**What to do** (Plan)", "**Draft Documents** (Create)"])
+    # Tab 4 is now "Voice Mode"
+    tab1, tab2, tab3, tab4 = st.tabs(["**Ask** (Explain)", "**What to do** (Plan)", "**Draft Documents** (Create)", "**Voice Mode** (Talk)"])
 
     # --- TAB 1: ASK (EXPLAIN) ---
     with tab1:
         st.header("Upload a Legal Document to Explain")
         st.write("Take a photo (or upload a PDF) of your legal notice or agreement.")
-        # 
         
         uploaded_file = st.file_uploader(
             "Choose a file...", 
@@ -281,7 +280,6 @@ else:
             elif "pdf" in file_type:
                 st.info("PDF file uploaded. Click 'Ask!' to explain.")
             
-            # RENAME BUTTON: Samjhao -> Ask
             if st.button("Explain!", type="primary", key="samjhao_button"):
                 
                 spinner_text = "Your friend is reading and explaining..."
@@ -326,7 +324,6 @@ else:
             st.subheader(f"Here's what it means in {language}:")
             st.markdown(st.session_state.samjhao_explanation)
             
-            # --- NEW: Audio Player ---
             st.markdown("---")
             st.write("🔊 **Listen to this explanation:**")
             audio_bytes = text_to_speech(st.session_state.samjhao_explanation, language)
@@ -334,7 +331,6 @@ else:
                 st.audio(audio_bytes, format="audio/mp3")
         
         if st.session_state.document_context != "No document uploaded." and st.session_state.samjhao_explanation:
-            # RENAME REFERENCE
             st.success("Context Saved! You can now ask questions about this document in the 'What to do' tab.")
 
 
@@ -401,7 +397,6 @@ else:
                     response = response_dict["answer"]
                     docs = response_dict["sources"]
 
-                    # Source of Truth Audit
                     used_document = False
                     if not docs and current_doc_context != "No document uploaded.":
                         audit_model = get_genai_model()
@@ -437,6 +432,58 @@ else:
     # --- TAB 3: DOCUMENT GENERATOR ---
     with tab3:
         show_document_generator()
+
+    # --- TAB 4: VOICE MODE (WEB COMPATIBLE) ---
+    with tab4:
+        st.header("Voice Chat (Web Compatible)")
+        st.write("Record a voice note, and Nyay-Saathi will reply with audio!")
+        
+        # New Streamlit Audio Input (Requires Streamlit 1.40+)
+        audio_value = st.audio_input("Record your legal question")
+
+        if audio_value:
+            st.audio(audio_value) # Play back what they recorded
+            
+            if st.button("Get Answer"):
+                with st.spinner("Listening and thinking..."):
+                    try:
+                        # 1. Get Model
+                        model = get_genai_model()
+                        
+                        # 2. Prepare Audio for Gemini
+                        audio_bytes = audio_value.getvalue()
+                        
+                        # 3. Construct Prompt
+                        prompt_text = f"""
+                        Listen to this user audio. 
+                        You are 'Nyay-Saathi', a helpful Indian legal assistant. 
+                        Answer the user's question in simple {language}.
+                        Keep the answer short, helpful, and friendly.
+                        """
+                        
+                        # 4. Send to Gemini (Multimodal)
+                        response = model.generate_content([
+                            prompt_text,
+                            {
+                                "mime_type": "audio/wav",
+                                "data": audio_bytes
+                            }
+                        ])
+                        
+                        response_text = response.text
+                        
+                        # 5. Display Text
+                        st.success("Nyay-Saathi says:")
+                        st.markdown(response_text)
+                        
+                        # 6. Generate Audio Response (TTS)
+                        st.write("🔊 **Listen to the answer:**")
+                        tts_audio = text_to_speech(response_text, language)
+                        if tts_audio:
+                            st.audio(tts_audio, format="audio/mp3")
+                            
+                    except Exception as e:
+                        st.error(f"Error processing audio: {e}")
 
 # --- DISCLAIMER ---
 st.divider()

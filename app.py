@@ -515,35 +515,22 @@ else:
                 if st.button("Generate Case Brief & Find Match", type="primary"):
                     with st.spinner("AI is analyzing your case details..."):
                         try:
-                            # --- THE FIX: TRUNCATE DATA ---
-                            # 1. Get only the last 10 messages (not 100)
-                            recent_messages = st.session_state.messages[-10:] 
-                            chat_summary = "\n".join([f"{m['role']}: {m['content']}" for m in recent_messages])
+                            # Gather Context
+                            chat_summary = "\n".join([m["content"] for m in st.session_state.messages])
+                            doc_summary = st.session_state.document_context[:2000] # Limit length
                             
-                            # 2. Limit document text to first 3000 characters (prevent overload)
-                            doc_text = st.session_state.document_context
-                            if len(doc_text) > 3000:
-                                doc_summary = doc_text[:3000] + "...[truncated]"
-                            else:
-                                doc_summary = doc_text
-
-                            # --- THE LOGIC ---
                             model = get_genai_model()
                             match_prompt = f"""
-                            You are a senior legal registrar. 
-                            Task: Categorize this case for a lawyer.
+                            Analyze this user's legal situation based on their chat and documents.
                             
-                            1. USER'S DOCUMENT PREVIEW: 
-                            {doc_summary}
+                            Chat History: {chat_summary}
+                            Document Context: {doc_summary}
+                            
+                            Output a JSON object with these 2 fields:
+                            1. "summary": A 3-sentence professional summary of the legal issue for a lawyer to read.
+                            2. "category": ONE of these exact categories: "Family Law", "Property Dispute", "Criminal Law", "Consumer Rights", "Corporate Law", "Cyber Crime". If unsure, use "General".
 
-                            2. USER'S CHAT CONTEXT:
-                            {chat_summary}
-                            
-                            Output ONLY a JSON object:
-                            {{
-                              "summary": "3 sentence legal summary of the issue.",
-                              "category": "Select one: Family Law, Property Dispute, Criminal Law, Consumer Rights, Corporate Law, Cyber Crime, or General."
-                            }}
+                            JSON:
                             """
                             
                             response = model.generate_content(match_prompt)
@@ -554,9 +541,9 @@ else:
                             st.session_state.recommended_lawyer_type = data["category"]
                             
                         except Exception as e:
-                            st.error(f"Optimization Error: {e}")
+                            st.error(f"AI Analysis failed: {e}")
                             # Fallback
-                            st.session_state.case_brief = "User needs legal assistance. (AI Busy)"
+                            st.session_state.case_brief = "User needs legal assistance based on recent inquiries."
                             st.session_state.recommended_lawyer_type = "General"
 
             with col_display:
